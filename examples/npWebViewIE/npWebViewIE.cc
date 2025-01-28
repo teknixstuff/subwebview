@@ -1,0 +1,387 @@
+#include "utils/StrUtil.cpp"
+#include "utils/FileUtil.cpp"
+#include "Version.h"
+#include "utils/WinUtil.cpp"
+#ifndef _WINDOWS
+#define _WINDOWS
+#endif
+#include "npapi/npfunctions.h"
+#include "webhost.h"
+
+HANDLE hWebViewThread;
+
+#define DLLEXPORT extern "C"
+#ifdef _WIN64
+#pragma comment(linker, "/EXPORT:NP_GetEntryPoints=NP_GetEntryPoints,PRIVATE")
+#pragma comment(linker, "/EXPORT:NP_Initialize=NP_Initialize,PRIVATE")
+#pragma comment(linker, "/EXPORT:NP_Shutdown=NP_Shutdown,PRIVATE")
+#pragma comment(linker, "/EXPORT:DllRegisterServer=DllRegisterServer,PRIVATE")
+#pragma comment(linker, "/EXPORT:DllUnregisterServer=DllUnregisterServer,PRIVATE")
+#else
+#pragma comment(linker, "/EXPORT:NP_GetEntryPoints=_NP_GetEntryPoints@4,PRIVATE")
+#pragma comment(linker, "/EXPORT:NP_Initialize=_NP_Initialize@4,PRIVATE")
+#pragma comment(linker, "/EXPORT:NP_Shutdown=_NP_Shutdown@0,PRIVATE")
+#pragma comment(linker, "/EXPORT:DllRegisterServer=_DllRegisterServer@0,PRIVATE")
+#pragma comment(linker, "/EXPORT:DllUnregisterServer=_DllUnregisterServer@0,PRIVATE")
+#endif
+
+#if NOLOG == 0
+const char *DllMainReason(DWORD reason)
+{
+    if (DLL_PROCESS_ATTACH == reason)
+        return "DLL_PROCESS_ATTACH";
+    if (DLL_PROCESS_DETACH == reason)
+        return "DLL_PROCESS_DETACH";
+    if (DLL_THREAD_ATTACH == reason)
+        return "DLL_THREAD_ATTACH";
+    if (DLL_THREAD_DETACH == reason)
+        return "DLL_THREAD_DETACH";
+    return "UNKNOWN";
+}
+#endif
+
+NPNetscapeFuncs gNPNFuncs;
+HINSTANCE g_hInstance = NULL;
+#ifndef _WIN64
+const WCHAR *g_lpRegKey = L"Software\\MozillaPlugins\\@subwebview.teknixstuff.com/npWebView";
+#else
+const WCHAR *g_lpRegKey = L"Software\\MozillaPlugins\\@subwebview.teknixstuff.com/npWebView_x64";
+#endif
+int gTranslationIdx = 0;
+
+DWORD WINAPI ThreadProc(LPVOID) {
+  MSG msg;
+
+  while (GetMessage(&msg, 0, 0, 0)) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+
+  return msg.wParam;
+}
+
+/* ::::: DLL Exports ::::: */
+
+BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+{
+    g_hInstance = hInstance;
+    return TRUE;
+}
+
+DLLEXPORT NPError WINAPI NP_GetEntryPoints(NPPluginFuncs *pFuncs)
+{
+    if (!pFuncs || pFuncs->size < sizeof(NPPluginFuncs))
+        return NPERR_INVALID_FUNCTABLE_ERROR;
+    
+    pFuncs->size = sizeof(NPPluginFuncs);
+    pFuncs->version = (NP_VERSION_MAJOR << 8) | NP_VERSION_MINOR;
+    pFuncs->newp = NPP_New;
+    pFuncs->destroy = NPP_Destroy;
+    pFuncs->setwindow = NPP_SetWindow;
+    pFuncs->newstream = NPP_NewStream;
+    pFuncs->destroystream = NPP_DestroyStream;
+    pFuncs->asfile = NPP_StreamAsFile;
+    pFuncs->writeready = NPP_WriteReady;
+    pFuncs->write = NPP_Write;
+    pFuncs->print = NPP_Print;
+    pFuncs->event = NULL;
+    pFuncs->urlnotify = NULL;
+    pFuncs->javaClass = NULL;
+    pFuncs->getvalue = NULL;
+    pFuncs->setvalue = NULL;
+    
+    return NPERR_NO_ERROR;
+}
+
+DLLEXPORT NPError WINAPI NP_Initialize(NPNetscapeFuncs *pFuncs)
+{
+    if (!pFuncs || pFuncs->size < sizeof(NPNetscapeFuncs))
+    {
+        return NPERR_INVALID_FUNCTABLE_ERROR;
+    }
+    if (HIBYTE(pFuncs->version) > NP_VERSION_MAJOR)
+    {
+        return NPERR_INCOMPATIBLE_VERSION_ERROR;
+    }
+
+    OleInitialize(NULL);
+    hWebViewThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, NULL);
+    
+    gNPNFuncs = *pFuncs;
+    
+    return NPERR_NO_ERROR;
+}
+
+DLLEXPORT NPError WINAPI NP_Shutdown(void)
+{
+    TerminateThread(hWebViewThread, 0);
+    OleUninitialize();
+    return NPERR_NO_ERROR;
+}
+
+DLLEXPORT STDAPI DllRegisterServer(VOID)
+{
+    HKEY hkey = HKEY_LOCAL_MACHINE;
+    if (!CreateRegKey(hkey, g_lpRegKey))
+    {
+        hkey = HKEY_CURRENT_USER;
+        if (!CreateRegKey(hkey, g_lpRegKey))
+            return E_UNEXPECTED;
+    }
+    
+    WCHAR szPath[MAX_PATH];
+    GetModuleFileName(g_hInstance, szPath, MAX_PATH);
+    if (!WriteRegStr(hkey, g_lpRegKey, L"Description", L"View web pages using WebView inside another browser") ||
+        !WriteRegStr(hkey, g_lpRegKey, L"Path", szPath) ||
+        !WriteRegStr(hkey, g_lpRegKey, L"Version", CURR_VERSION_STR) ||
+        !WriteRegStr(hkey, g_lpRegKey, L"ProductName", L"SubWebView"))
+    {
+        return E_UNEXPECTED;
+    }
+    
+    static const WCHAR *mimeTypes[] = {
+        L"application/x-subwebview"
+    };
+    for (int i = 0; i < dimof(mimeTypes); i++)
+    {
+        ScopedMem<WCHAR> keyName(str::Join(g_lpRegKey, L"\\MimeTypes\\", mimeTypes[i]));
+        CreateRegKey(hkey, keyName);
+    }
+    
+    return S_OK;
+}
+
+DLLEXPORT STDAPI DllUnregisterServer(VOID)
+{
+    DeleteRegKey(HKEY_LOCAL_MACHINE, g_lpRegKey);
+    DeleteRegKey(HKEY_CURRENT_USER, g_lpRegKey);
+    
+    return S_OK;
+}
+
+/* ::::: Auxiliary Methods ::::: */
+
+int cmpWcharPtrs(const void *a, const void *b)
+{
+    return wcscmp(*(const WCHAR **)a, *(const WCHAR **)b);
+}
+
+/* ::::: Plugin Window Procedure ::::: */
+
+struct InstanceData {
+    NPWindow *  npwin;
+    LPCWSTR     message;
+    webhostwnd* webHost;
+};
+
+#define COL_WINDOW_BG RGB(0xcc, 0xcc, 0xcc)
+
+void LaunchSubWebView(InstanceData *data, const char *url_utf8)
+{
+    ScopedMem<WCHAR> url(str::conv::FromUtf8(url_utf8));
+    // escape quotation marks and backslashes for CmdLineParser.cpp's ParseQuoted
+    if (str::FindChar(url, '"')) {
+        WStrVec parts;
+        parts.Split(url, L"\"");
+        url.Set(parts.Join(L"%22"));
+    }
+    if (str::EndsWith(url, L"\\")) {
+        url[str::Len(url) - 1] = '\0';
+        url.Set(str::Join(url, L"%5c"));
+    }
+
+    data->webHost = new webhostwnd;
+    data->webHost->hwnd = (HWND)data->npwin->window;
+    data->webHost->url = url;
+    data->webHost->CreateEmbeddedWebControl();
+    data->message = L"Launched SubWebView";
+}
+
+LRESULT CALLBACK PluginWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+{
+    NPP instance = (NPP)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+    
+    if (uiMsg == WM_PAINT)
+    {
+        InstanceData *data = (InstanceData *)instance->pdata;
+        
+        PAINTSTRUCT ps;
+        HDC hDC = BeginPaint(hWnd, &ps);
+        HBRUSH brushBg = CreateSolidBrush(COL_WINDOW_BG);
+        HFONT hFont = CreateSimpleFont(hDC, L"MS Shell Dlg", 14);
+        
+        // set up double buffering
+        RectI rcClient = ClientRect(hWnd);
+        DoubleBuffer buffer(hWnd, rcClient);
+        HDC hDCBuffer = buffer.GetDC();
+        
+        // display message centered in the window
+        RECT rectClient = rcClient.ToRECT();
+        FillRect(hDCBuffer, &rectClient, brushBg);
+        hFont = (HFONT)SelectObject(hDCBuffer, hFont);
+        SetTextColor(hDCBuffer, RGB(0, 0, 0));
+        SetBkMode(hDCBuffer, TRANSPARENT);
+        DrawCenteredText(hDCBuffer, rcClient, data->message, FALSE);
+        
+        // draw the buffer on screen
+        buffer.Flush(hDC);
+        
+        DeleteObject(SelectObject(hDCBuffer, hFont));
+        DeleteObject(brushBg);
+        EndPaint(hWnd, &ps);
+        
+        HWND hChild = FindWindowEx(hWnd, NULL, NULL, NULL);
+        if (hChild)
+            InvalidateRect(hChild, NULL, FALSE);
+    }
+    else if (uiMsg == WM_SIZE)
+    {
+        HWND hChild = FindWindowEx(hWnd, NULL, NULL, NULL);
+        if (hChild)
+        {
+            ClientRect rcClient(hWnd);
+            MoveWindow(hChild, rcClient.x, rcClient.y, rcClient.dx, rcClient.dy, FALSE);
+        }
+    }
+    else if (uiMsg == WM_COPYDATA)
+    {
+        COPYDATASTRUCT *cds = (COPYDATASTRUCT *)lParam;
+        if (cds && 0x4C5255 /* URL */ == cds->dwData)
+        {
+            gNPNFuncs.geturl(instance, (const char *)cds->lpData, "_blank");
+            return TRUE;
+        }
+    }
+    
+    return DefWindowProc(hWnd, uiMsg, wParam, lParam);
+}
+
+/* ::::: Plugin Methods ::::: */
+
+NPError NP_LOADDS NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
+{
+    if (!instance)
+    {
+        return NPERR_INVALID_INSTANCE_ERROR;
+    }
+
+    instance->pdata = AllocStruct<InstanceData>();
+    if (!instance->pdata)
+    {
+        return NPERR_OUT_OF_MEMORY_ERROR;
+    }
+
+    gNPNFuncs.setvalue(instance, NPPVpluginWindowBool, (void *)true);
+    
+    InstanceData *data = (InstanceData *)instance->pdata;
+    data->message = L"Opening SubWebView...";
+    
+    return NPERR_NO_ERROR;
+}
+
+NPError NP_LOADDS NPP_SetWindow(NPP instance, NPWindow *npwin)
+{
+    if (!instance)
+    {
+        return NPERR_INVALID_INSTANCE_ERROR;
+    }
+
+    InstanceData *data = (InstanceData *)instance->pdata;
+    if (!npwin)
+    {
+        data->npwin = NULL;
+    }
+    else if (data->npwin != npwin)
+    {
+        HWND hWnd = (HWND)npwin->window;
+        
+        data->npwin = npwin;
+        SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)instance);
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)PluginWndProc);
+    }
+    else
+    {
+        // The plugin's window hasn't changed, just its size
+        HWND hWnd = (HWND)npwin->window;
+        HWND hChild = FindWindowEx(hWnd, NULL, NULL, NULL);
+        
+        if (hChild)
+        {
+            ClientRect rcClient(hWnd);
+            MoveWindow(hChild, rcClient.x, rcClient.y, rcClient.dx, rcClient.dy, FALSE);
+        }
+    }
+    
+    return NPERR_NO_ERROR;
+}
+
+NPError NP_LOADDS NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype)
+{
+    InstanceData *data = (InstanceData *)instance->pdata;
+    LaunchSubWebView(data, stream->url);
+    gNPNFuncs.destroystream(instance, stream, NPRES_DONE);
+    return NPERR_NO_ERROR;
+}
+
+int32_t NP_LOADDS NPP_WriteReady(NPP instance, NPStream* stream)
+{
+    return stream->end > 0 ? stream->end : INT_MAX;
+}
+
+int32_t NP_LOADDS NPP_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len, void* buffer)
+{
+    gNPNFuncs.destroystream(instance, stream, NPRES_DONE);
+    return 0;
+}
+
+void NP_LOADDS NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname)
+{
+}
+
+NPError NP_LOADDS NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason)
+{
+    return NPERR_NO_ERROR;
+}
+
+NPError NP_LOADDS NPP_Destroy(NPP instance, NPSavedData** save)
+{
+    if (!instance)
+    {
+        return NPERR_INVALID_INSTANCE_ERROR;
+    }
+
+    InstanceData *data = (InstanceData *)instance->pdata;
+    data->webHost->UnCreateEmbeddedWebControl();
+    data->webHost->Release();
+
+    free(data);
+    
+    return NPERR_NO_ERROR;
+}
+
+// Note: NPP_Print is never called by Google Chrome or Firefox 4
+//       cf. http://code.google.com/p/chromium/issues/detail?id=83341
+//       and https://bugzilla.mozilla.org/show_bug.cgi?id=638796
+
+#define IDM_PRINT 403
+
+void NP_LOADDS NPP_Print(NPP instance, NPPrint* platformPrint)
+{
+    if (!platformPrint)
+    {
+        return;
+    }
+
+    if (NP_FULL == platformPrint->mode)
+    {
+        InstanceData *data = (InstanceData *)instance->pdata;
+        HWND hWnd = (HWND)data->npwin->window;
+        HWND hChild = FindWindowEx(hWnd, NULL, NULL, NULL);
+        
+        if (hChild)
+        {
+            PostMessage(hChild, WM_COMMAND, IDM_PRINT, 0);
+            platformPrint->print.fullPrint.pluginPrinted = true;
+        }
+    }
+}

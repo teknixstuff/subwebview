@@ -1,0 +1,7 @@
+<!ENTITY subwebview.settings.title "SubWebView Settings">
+<!ENTITY subwebview.settings.sites.title "Site settings">
+<!ENTITY subwebview.settings.sites.pattern "Pattern">
+<!ENTITY subwebview.engine.title "Engine">
+<!ENTITY subwebview.engine.standard "Standard">
+<!ENTITY subwebview.engine.chromium "Chromium">
+<!ENTITY subwebview.engine.iexplore "Internet Explorer">

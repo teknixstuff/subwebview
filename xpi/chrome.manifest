@@ -1,0 +1,3 @@
+content subwebview content/
+locale subwebview en-US locale/en-US/
+overlay chrome://browser/content/browser.xul chrome://subwebview/content/browserOverlay.xul

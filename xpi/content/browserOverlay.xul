@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<overlay id="subwebview-browser-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="chrome://subwebview/content/browserOverlay.js"></script>
+  <!-- Preload the plugin -->
+  <!-- <embed xmlns="http://www.w3.org/1999/xhtml" name="plugin" type="application/x-subwebview" src="http://example.com" width="0" height="0"></embed> -->
+</overlay>

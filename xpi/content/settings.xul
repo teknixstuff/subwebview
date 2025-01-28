@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE window SYSTEM "chrome://subwebview/locale/subwebview.dtd">
+
+<dialog id="subWebViewSettings"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	buttons="accept, cancel"
+	onload="loadSettings()"
+	ondialogaccept="return saveSettings()"
+	title="&subwebview.settings.title;">
+
+	<script type="application/x-javascript" src="chrome://subwebview/content/settings.js"></script>
+	
+	<groupbox id="sites" flex="1">
+		<caption label="&subwebview.settings.sites.title;"/>
+		<richlistbox flex="1" id="sites_list" style="min-height: 14em;">
+			<richlistcols>
+				<richlistcol />
+				<richlistcol />
+			</richlistcols>
+			<richlistitem id="sites_header">
+				<!-- 
+					RichList* does not support headers, so I've had to hack together my own here.
+					I would appreciate it if Pale Moon could sort this out, either by making RichList* more capable,
+					or by fixing List*'s issues with mouse interaction on XUL child elements.
+				-->
+				<richlistcell>
+					<listheader id="sites_header_pattern" style="width: 14em;" label="&subwebview.settings.sites.pattern;" />
+				</richlistcell>
+				<richlistcell>
+					<listheader id="sites_header_engine" label="&subwebview.engine.title;" />
+				</richlistcell>
+			</richlistitem>
+			<richlistitem id="sites_template" hidden="true">
+				<richlistcell style="width: 14em;">
+					<textbox style="width: 100%;" class="site_pattern" value="" flex="1" oninput="patternChange(this.closest('richlistitem'))" />
+				</richlistcell>
+				<richlistcell>
+					<menulist class="site_engine">
+						<menupopup>
+							<menuitem label="&subwebview.engine.standard;" value="standard"/>
+							<menuitem label="&subwebview.engine.chromium;" value="chromium"/>
+							<menuitem label="&subwebview.engine.iexplore;" value="iexplore"/>
+						</menupopup>
+					</menulist>
+				</richlistcell>
+			</richlistitem>
+		</richlistbox>
+	</groupbox>
+</dialog>
