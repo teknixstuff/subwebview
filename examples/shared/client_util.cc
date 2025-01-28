@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 
-#include "include/cef_command_line.h"
 #include "include/views/cef_browser_view.h"
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_helpers.h"
@@ -19,6 +18,8 @@ namespace shared {
 void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
   CEF_REQUIRE_UI_THREAD();
 
+#if defined(OS_WIN) || defined(OS_LINUX)
+  // The Views framework is currently only supported on Windows and Linux.
   CefRefPtr<CefBrowserView> browser_view =
       CefBrowserView::GetForBrowser(browser);
   if (browser_view) {
@@ -26,7 +27,9 @@ void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
     CefRefPtr<CefWindow> window = browser_view->GetWindow();
     if (window)
       window->SetTitle(title);
-  } else {
+  } else
+#endif
+  {
     // Set the title of the window using platform APIs.
     PlatformTitleChange(browser, title);
   }
@@ -107,23 +110,6 @@ std::string DumpRequestContents(CefRefPtr<CefRequest> request) {
   }
 
   return ss.str();
-}
-
-bool IsViewsEnabled() {
-  static bool enabled = []() {
-    // Views is enabled by default, unless `--use-native` is specified.
-    return !CefCommandLine::GetGlobalCommandLine()->HasSwitch("use-native");
-  }();
-  return enabled;
-}
-
-bool IsAlloyStyleEnabled() {
-  static bool enabled = []() {
-    // Chrome style is enabled by default, unless `--use-alloy-style` is
-    // specified.
-    return CefCommandLine::GetGlobalCommandLine()->HasSwitch("use-alloy-style");
-  }();
-  return enabled;
 }
 
 }  // namespace shared

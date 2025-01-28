@@ -8,6 +8,12 @@
 
 namespace minimal {
 
+namespace {
+
+const char kStartupURL[] = "https://www.google.com";
+
+}  // namespace
+
 // Minimal implementation of CefApp for the browser process.
 class BrowserApp : public CefApp, public CefBrowserProcessHandler {
  public:
@@ -24,7 +30,6 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
     // Command-line flags can be modified in this callback.
     // |process_type| is empty for the browser process.
     if (process_type.empty()) {
-      command_line->AppendSwitch("single-process");
 #if defined(OS_MACOSX)
       // Disable the macOS keychain prompt. Cookies will not be encrypted.
       command_line->AppendSwitch("use-mock-keychain");
@@ -34,6 +39,8 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
 
   // CefBrowserProcessHandler methods:
   void OnContextInitialized() override {
+    // Create the browser window.
+    shared::CreateBrowser(new Client(), kStartupURL, CefBrowserSettings());
   }
 
  private:

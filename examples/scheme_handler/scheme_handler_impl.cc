@@ -62,7 +62,7 @@ class ClientSchemeHandler : public CefResourceHandler {
   }
 
   void GetResponseHeaders(CefRefPtr<CefResponse> response,
-                          int64_t& response_length,
+                          int64& response_length,
                           CefString& redirectUrl) override {
     CEF_REQUIRE_IO_THREAD();
 

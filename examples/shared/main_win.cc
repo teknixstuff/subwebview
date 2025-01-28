@@ -20,6 +20,9 @@ namespace shared {
 
 // Entry point function for all processes.
 int APIENTRY wWinMain(HINSTANCE hInstance) {
+  // Enable High-DPI support on Windows 7 or newer.
+  CefEnableHighDPISupport();
+
   void* sandbox_info = nullptr;
 
 #if defined(CEF_USE_SANDBOX)
@@ -68,13 +71,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance) {
   settings.no_sandbox = true;
 #endif
 
-  // Initialize the CEF browser process. The first browser instance will be
+  // Initialize CEF for the browser process. The first browser instance will be
   // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
-  // been initialized. May return false if initialization fails or if early exit
-  // is desired (for example, due to process singleton relaunch behavior).
-  if (!CefInitialize(main_args, settings, app, sandbox_info)) {
-    return 1;
-  }
+  // been initialized.
+  CefInitialize(main_args, settings, app, sandbox_info);
 
   // Run the CEF message loop. This will block until CefQuitMessageLoop() is
   // called.

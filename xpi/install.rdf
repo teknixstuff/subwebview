@@ -4,7 +4,7 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
     <em:id>subwebview@teknixstuff.com</em:id>
-    <em:version>1.0.3</em:version>
+    <em:version>1.0.3-w7-cef109</em:version>
     <em:type>2</em:type>
     <em:unpack>true</em:unpack>
     <em:iconURL>chrome://subwebview/content/logo.png</em:iconURL>

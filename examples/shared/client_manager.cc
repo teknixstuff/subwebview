@@ -62,8 +62,7 @@ void ClientManager::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
 
   if (browser_list_.empty()) {
     // All browser windows have closed. Quit the application message loop.
-    // CefQuitMessageLoop();
-    // Don't do that, we're a plugin.
+    CefQuitMessageLoop();
   }
 }
 

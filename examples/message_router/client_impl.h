@@ -52,9 +52,7 @@ class Client : public CefClient,
       const CefString& request_initiator,
       bool& disable_default_handling) override;
   void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
-                                 TerminationStatus status,
-                                 int error_code,
-                                 const CefString& error_string) override;
+                                 TerminationStatus status) override;
 
   // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(

@@ -26,7 +26,7 @@ class MessageHandler : public CefMessageRouterBrowserSide::Handler {
   // Called due to cefQuery execution in message_router.html.
   bool OnQuery(CefRefPtr<CefBrowser> browser,
                CefRefPtr<CefFrame> frame,
-               int64_t query_id,
+               int64 query_id,
                const CefString& request,
                bool persistent,
                CefRefPtr<Callback> callback) override {
@@ -136,9 +136,7 @@ CefRefPtr<CefResourceRequestHandler> Client::GetResourceRequestHandler(
 }
 
 void Client::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
-                                       TerminationStatus status,
-                                       int error_code,
-                                       const CefString& error_string) {
+                                       TerminationStatus status) {
   CEF_REQUIRE_UI_THREAD();
 
   message_router_->OnRenderProcessTerminated(browser);

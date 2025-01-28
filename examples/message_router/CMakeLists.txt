@@ -14,7 +14,6 @@ set(EXAMPLE_SRCS
   client_impl.h
   )
 set(EXAMPLE_SRCS_WINDOWS
-  resource.h
   resource_util_win_impl.cc
   )
 APPEND_PLATFORM_SOURCES(EXAMPLE_SRCS)
@@ -41,7 +40,8 @@ set(EXAMPLE_RESOURCES_SRCS
   )
 set(EXAMPLE_RESOURCES_SRCS_WINDOWS
   # Resources that embed "message_router.html" in the executable.
-  win/resource.rc
+  resources/win/resource.h
+  resources/win/resource.rc
   )
 APPEND_PLATFORM_SOURCES(EXAMPLE_RESOURCES_SRCS)
 
@@ -139,7 +139,7 @@ if(OS_MAC)
     # manually because the configure_file command (which is executed as part of
     # MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
     # wrong values with multiple targets.
-    set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist.in")
+    set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_HELPER_INFO_PLIST}" _plist_contents)
     string(REPLACE "\${EXECUTABLE_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
     string(REPLACE "\${PRODUCT_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
@@ -179,7 +179,7 @@ if(OS_MAC)
   # directive but that doesn't properly handle nested resource directories.
   # Remove these prefixes from input file paths.
   set(PREFIXES
-    "../shared/mac/"
+    "../shared/resources/mac/"
     )
   COPY_MAC_RESOURCES("${EXAMPLE_RESOURCES_SRCS}" "${PREFIXES}" "${EXAMPLE_TARGET}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_APP}")
 endif()
