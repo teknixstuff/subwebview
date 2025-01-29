@@ -19,6 +19,9 @@
 
 HANDLE hWebViewThread;
 
+#define WM_CEF_INVOKE_POPUP (WM_USER + 0x0001)
+#define WM_CEF_SET_TITLE (WM_USER + 0x0002)
+
 #define DLLEXPORT extern "C"
 #ifdef _WIN64
 #pragma comment(linker, "/EXPORT:NP_GetEntryPoints=NP_GetEntryPoints,PRIVATE")
@@ -235,7 +238,7 @@ struct InstanceData {
 
 #define COL_WINDOW_BG RGB(0xcc, 0xcc, 0xcc)
 
-void LaunchSubWebView(InstanceData *data, const char *url_utf8)
+void LaunchSubWebView(InstanceData *data, const char *url_utf8, NPP npp)
 {
     ScopedMem<WCHAR> url(str::conv::FromUtf8(url_utf8));
     // escape quotation marks and backslashes for CmdLineParser.cpp's ParseQuoted
@@ -255,12 +258,14 @@ void LaunchSubWebView(InstanceData *data, const char *url_utf8)
     }
 
     // Create the browser window.
+    auto client = new minimal::Client();
+    client->hPluginWnd = (HWND)data->npwin->window;
     CefWindowInfo window_info;
-    window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
+    //window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
     CefRect rect;
     rect.Set(0, 0, data->npwin->width, data->npwin->height);
     window_info.SetAsChild((HWND)data->npwin->window, rect);
-    CefBrowserHost::CreateBrowser(window_info, new minimal::Client(), url.Get(),
+    CefBrowserHost::CreateBrowser(window_info, client, url.Get(),
                                   CefBrowserSettings(), nullptr,
                                   nullptr);
 
@@ -336,6 +341,41 @@ LRESULT CALLBACK PluginWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lPar
             return TRUE;
         }
     }
+    else if (uiMsg == WM_CEF_INVOKE_POPUP) {
+        auto target_url_stdstr = (std::string*)lParam;
+        NPObject* window = NULL;
+        gNPNFuncs.getvalue(instance, NPNVWindowNPObject, &window);
+        NPIdentifier openId = gNPNFuncs.getstringidentifier("open");
+        NPVariant args[1];
+        NPString args_uri;
+        args_uri.utf8characters = target_url_stdstr->c_str();
+        args_uri.utf8length = (uint32_t)target_url_stdstr->length();
+        args[0].type = NPVariantType_String;
+        args[0].value.stringValue = args_uri;
+        NPVariant result;
+        gNPNFuncs.invoke(instance, window, openId, args, ARRAYSIZE(args), &result);
+        delete target_url_stdstr;
+        return TRUE;
+    }
+    else if (uiMsg == WM_CEF_SET_TITLE) {
+        auto title_std = (std::string*)lParam;
+        NPObject* window = NULL;
+        gNPNFuncs.getvalue(instance, NPNVWindowNPObject, &window);
+        NPIdentifier docId = gNPNFuncs.getstringidentifier("document");
+        NPVariant documentVar;
+        gNPNFuncs.getproperty(instance, window, docId, &documentVar);
+        NPObject* document = NPVARIANT_TO_OBJECT(documentVar);
+        NPIdentifier titleId = gNPNFuncs.getstringidentifier("title");
+        NPString title;
+        title.utf8characters = title_std->c_str();
+        title.utf8length = (uint32_t)title_std->length();
+        NPVariant titleVar;
+        titleVar.type = NPVariantType_String;
+        titleVar.value.stringValue = title;
+        gNPNFuncs.setproperty(instance, document, titleId, &titleVar);
+        delete title_std;
+        return TRUE;
+    }
     
     return DefWindowProc(hWnd, uiMsg, wParam, lParam);
 }
@@ -402,7 +442,7 @@ NPError NP_LOADDS NPP_SetWindow(NPP instance, NPWindow *npwin)
 NPError NP_LOADDS NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype)
 {
     InstanceData *data = (InstanceData *)instance->pdata;
-    LaunchSubWebView(data, stream->url);
+    LaunchSubWebView(data, stream->url, instance);
     gNPNFuncs.destroystream(instance, stream, NPRES_DONE);
     return NPERR_NO_ERROR;
 }

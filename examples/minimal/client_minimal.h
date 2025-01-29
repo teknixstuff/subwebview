@@ -6,6 +6,7 @@
 #define CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_
 
 #include "include/cef_client.h"
+#include "npapi/npfunctions.h"
 
 namespace minimal {
 
@@ -15,6 +16,8 @@ class Client : public CefClient,
                public CefLifeSpanHandler {
  public:
   Client();
+
+  HWND hPluginWnd;
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
@@ -28,6 +31,19 @@ class Client : public CefClient,
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
   bool DoClose(CefRefPtr<CefBrowser> browser) override;
   void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
+  bool OnBeforePopup(
+      CefRefPtr<CefBrowser> browser,
+      CefRefPtr<CefFrame> frame,
+      const CefString& target_url,
+      const CefString& target_frame_name,
+      WindowOpenDisposition target_disposition,
+      bool user_gesture,
+      const CefPopupFeatures& popupFeatures,
+      CefWindowInfo& windowInfo,
+      CefRefPtr<CefClient>& client,
+      CefBrowserSettings& settings,
+      CefRefPtr<CefDictionaryValue>& extra_info,
+      bool* no_javascript_access) override;
 
  private:
   IMPLEMENT_REFCOUNTING(Client);
