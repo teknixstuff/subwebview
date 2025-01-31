@@ -261,7 +261,7 @@ void LaunchSubWebView(InstanceData *data, const char *url_utf8, NPP npp)
     auto client = new minimal::Client();
     client->hPluginWnd = (HWND)data->npwin->window;
     CefWindowInfo window_info;
-    //window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
+    window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
     CefRect rect;
     rect.Set(0, 0, data->npwin->width, data->npwin->height);
     window_info.SetAsChild((HWND)data->npwin->window, rect);
