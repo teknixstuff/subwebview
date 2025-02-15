@@ -13,19 +13,27 @@ namespace minimal {
 // Minimal implementation of client handlers.
 class Client : public CefClient,
                public CefDisplayHandler,
-               public CefLifeSpanHandler {
+               public CefLifeSpanHandler,
+               public CefLoadHandler {
  public:
   Client();
 
   HWND hPluginWnd;
+  std::string* profileDir;
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
+  CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 
   // CefDisplayHandler methods:
   void OnTitleChange(CefRefPtr<CefBrowser> browser,
                      const CefString& title) override;
+
+  // GetLoadHandler methods:
+  void OnLoadStart(CefRefPtr<CefBrowser> browser,
+                   CefRefPtr<CefFrame> frame,
+                   TransitionType transition_type) override;
 
   // CefLifeSpanHandler methods:
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
