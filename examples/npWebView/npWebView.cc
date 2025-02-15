@@ -61,7 +61,8 @@ const WCHAR *g_lpRegKey = L"Software\\MozillaPlugins\\@subwebview.teknixstuff.co
 #endif
 int gTranslationIdx = 0;
 
-DWORD cefInit = FALSE;
+DWORD cefInit = 0;
+std::string* profileDir;
 
 DWORD WINAPI CEFMainThread(LPVOID) {
     void* sandbox_info = nullptr;
@@ -94,6 +95,8 @@ DWORD WINAPI CEFMainThread(LPVOID) {
     settings.no_sandbox = true;
 #endif
 
+    CefString(&settings.root_cache_path).FromString(*profileDir + "\\SubWebView");
+
     // Initialize the CEF browser process. The first browser instance will be
     // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
     // been initialized. May return false if initialization fails or if early
@@ -103,7 +106,7 @@ DWORD WINAPI CEFMainThread(LPVOID) {
         return 1;
     }
 
-    cefInit = TRUE;
+    cefInit = 2;
 
     // Run the CEF message loop. This will block until CefQuitMessageLoop() is
     // called.
@@ -158,8 +161,6 @@ DLLEXPORT NPError WINAPI NP_Initialize(NPNetscapeFuncs *pFuncs)
     {
         return NPERR_INCOMPATIBLE_VERSION_ERROR;
     }
-
-    hWebViewThread = CreateThread(NULL, 0, CEFMainThread, NULL, 0, NULL);
     
     gNPNFuncs = *pFuncs;
     
@@ -168,10 +169,12 @@ DLLEXPORT NPError WINAPI NP_Initialize(NPNetscapeFuncs *pFuncs)
 
 DLLEXPORT NPError WINAPI NP_Shutdown(void)
 {
-    cefInit = FALSE;
-    //CefQuitMessageLoop();
-    CefPostTask(TID_UI, base::BindOnce(CefQuitMessageLoop));
-    WaitForSingleObject(hWebViewThread, INFINITE);
+    if (cefInit != 0) {
+        cefInit = 1;
+        CefPostTask(TID_UI, base::BindOnce(CefQuitMessageLoop));
+        WaitForSingleObject(hWebViewThread, INFINITE);
+        delete profileDir;
+    }
     return NPERR_NO_ERROR;
 }
 
@@ -252,14 +255,27 @@ void LaunchSubWebView(InstanceData *data, const char *url_utf8, NPP npp)
         url.Set(str::Join(url, L"%5c"));
     }
 
+    if (cefInit == 0) {
+        cefInit = 1;
+        NPObject* window = NULL;
+        gNPNFuncs.getvalue(npp, NPNVWindowNPObject, &window);
+        NPIdentifier profileId = gNPNFuncs.getstringidentifier("subWebViewProfile");
+        NPVariant profileVar;
+        gNPNFuncs.getproperty(npp, window, profileId, &profileVar);
+        NPString profile = NPVARIANT_TO_STRING(profileVar);
+        profileDir = new std::string(profile.utf8characters, profile.utf8length);
+        hWebViewThread = CreateThread(NULL, 0, CEFMainThread, NULL, 0, NULL);
+    }
+
     data->message = L"Waiting for SubWebView...";
-    while (!cefInit) {
+    while (cefInit != 2) {
         Sleep(100);
     }
 
     // Create the browser window.
     auto client = new minimal::Client();
     client->hPluginWnd = (HWND)data->npwin->window;
+    client->profileDir = profileDir;
     CefWindowInfo window_info;
     window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
     CefRect rect;

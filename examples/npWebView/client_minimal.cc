@@ -2,6 +2,7 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
+#include <fstream>
 #include "examples/minimal/client_minimal.h"
 #include "include/internal/cef_types.h"
 #include "examples/shared/client_util.h"
@@ -33,6 +34,16 @@ namespace minimal {
     void Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
       // Call the default shared implementation.
       return shared::OnBeforeClose(browser);
+    }
+
+    void Client::OnLoadStart(CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        TransitionType transition_type)
+    {
+        std::ifstream ifs(*profileDir + "\\SubWebView\\subwebview.user.js");
+        std::string script((std::istreambuf_iterator<char>(ifs)),
+                          (std::istreambuf_iterator<char>()));
+        frame->ExecuteJavaScript(script, L"subwebview-profile://subwebview.user.js", 0);
     }
 
     bool Client::OnBeforePopup(CefRefPtr<CefBrowser> browser,
