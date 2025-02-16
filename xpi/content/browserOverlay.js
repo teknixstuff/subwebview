@@ -1,4 +1,5 @@
 Components.utils.import("resource://gre/modules/Services.jsm");
+
 function getEngineForURI(uri) {
   try {
     sitesConfig = JSON.parse(Services.prefs.getCharPref('extensions.subwebview.siteConfig'));
@@ -95,6 +96,10 @@ let progListener = {
         doc.body.style.width = '100%';
         doc.body.style.height = '100%';
         doc.body.style.overflow = 'hidden';
+        let profile = Components.classes["@mozilla.org/file/directory_service;1"]
+                     .getService(Components.interfaces.nsIProperties)
+                     .get("ProfD", Components.interfaces.nsILocalFile);
+        aWebProgress.DOMWindow.wrappedJSObject.subWebViewProfile = profile.path;
         let embed = doc.createElement('embed');
         embed.name = 'plugin';
         if (engine == 'chromium') {
