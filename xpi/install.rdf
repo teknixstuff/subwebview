@@ -7,7 +7,6 @@
     <em:version>1.0.5</em:version>
     <em:type>2</em:type>
     <em:unpack>true</em:unpack>
-    <em:iconURL>chrome://subwebview/content/logo.png</em:iconURL>
     <em:optionsURL>chrome://subwebview/content/settings.xul</em:optionsURL>
 
     <!-- Pale Moon -->
