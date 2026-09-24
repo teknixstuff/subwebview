@@ -27,15 +27,15 @@ CEF_PLATFORMS = ("windows32", "windows64", "windowsarm64", "macosx64",
 
 description = """
 Use the following command to update version information:
-% python3 ./tools/bazel/version_updater.py --version=<version> [--url=<url>]
+% python3 ./tools/bazel/version_updater.py --version=<version> [--channel=<channel>] [--url=<url>]
 
 Specify a fully-qualified CEF version. Optionally override the default
 download URL.
 
 CEF binary distribution file names are expected to take the form
-"cef_binary_<version>_<platform>.tar.bz2". These files must exist for each
-supported platform at the download URL location. Sha256 hashes must also
-exist for each file at "<file_name>.sha256".
+"cef_binary_<version>_<platform>[_<channel>].tar.bz2". These files must
+exist for each supported platform at the download URL location. Sha256
+hashes must also exist for each file at "<file_name>.sha256".
 """
 
 
@@ -54,8 +54,8 @@ def exit_with_error(error):
 
 
 # Check if the CEF version number format is valid. The format is documented at
-# https://bitbucket.org/chromiumembedded/cef/wiki/BranchesAndBuilding.md#markdown-header-version-number-format
-# Code from https://bitbucket.org/chromiumembedded/cef/src/master/tools/cefbuilds/cef_json_builder.py
+# https://chromiumembedded.github.io/cef/branches_and_building#version-number-format
+# Code from https://github.com/chromiumembedded/cef/blob/master/tools/cefbuilds/cef_json_builder.py
 def is_valid_version(version):
   _chromium_version_regex = r'[1-9]{1}[0-9]{1,2}\.0\.[1-9]{1}[0-9]{2,4}\.(0|[1-9]{1}[0-9]{0,2})'
   _cef_hash_regex = r'g[0-9a-f]{7}'
@@ -101,6 +101,8 @@ if __name__ != "__main__":
 parser = OptionParser()
 parser.add_option(
     '--version', dest='version', help='CEF version to download [required].')
+parser.add_option(
+    '--channel', dest='channel', help='CEF channel to download.', default='')
 parser.add_option('--url', dest='url',
                   help='CEF download URL. If not specified the default URL '+\
                        'will be used.',
@@ -113,6 +115,9 @@ if version is None:
 if not is_valid_version(version):
   exit_with_error('Invalid version format.')
 
+# Beta builds have a specific suffix.
+channel = '_beta' if options.channel == 'beta' else ''
+
 out_file = os.path.join(root_dir, 'bazel', 'cef', 'version.bzl')
 in_file = out_file + '.in'
 if not os.path.isfile(in_file):
@@ -121,12 +126,14 @@ if not os.path.isfile(in_file):
 variables = {
     'description': get_description(),
     'version': version,
+    'channel': channel,
     'url': options.url,
 }
 
 print("Downloading sha256 values...")
 for platform in CEF_PLATFORMS:
-  url = "%scef_binary_%s_%s.tar.bz2.sha256" % (options.url, version, platform)
+  url = "%scef_binary_%s_%s%s.tar.bz2.sha256" % (options.url, version, platform,
+                                                 channel)
   sha256 = download_url(url)
   if not is_valid_sha256(sha256):
     exit_with_error('Missing or invalid sha256 from %s' % url)

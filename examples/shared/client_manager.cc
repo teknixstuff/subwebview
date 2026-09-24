@@ -52,18 +52,16 @@ void ClientManager::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
   DCHECK(thread_checker_.CalledOnValidThread());
 
   // Remove from the list of existing browsers.
-  BrowserList::iterator bit = browser_list_.begin();
-  for (; bit != browser_list_.end(); ++bit) {
-    if ((*bit)->IsSame(browser)) {
-      browser_list_.erase(bit);
+  for (auto it = browser_list_.begin(); it != browser_list_.end(); ++it) {
+    if ((*it)->IsSame(browser)) {
+      browser_list_.erase(it);
       break;
     }
   }
 
   if (browser_list_.empty()) {
     // All browser windows have closed. Quit the application message loop.
-    // CefQuitMessageLoop();
-    // Don't do that, we're a plugin.
+    CefQuitMessageLoop();
   }
 }
 
@@ -73,9 +71,8 @@ void ClientManager::CloseAllBrowsers(bool force_close) {
   if (browser_list_.empty())
     return;
 
-  BrowserList::const_iterator it = browser_list_.begin();
-  for (; it != browser_list_.end(); ++it)
-    (*it)->GetHost()->CloseBrowser(force_close);
+  for (const auto& browser : browser_list_)
+    browser->GetHost()->CloseBrowser(force_close);
 }
 
 bool ClientManager::IsClosing() const {

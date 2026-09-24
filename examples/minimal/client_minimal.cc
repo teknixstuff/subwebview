@@ -8,7 +8,7 @@
 
 namespace minimal {
 
-Client::Client() {}
+Client::Client() = default;
 
 void Client::OnTitleChange(CefRefPtr<CefBrowser> browser,
                            const CefString& title) {

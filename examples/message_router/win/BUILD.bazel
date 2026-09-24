@@ -10,23 +10,19 @@ package(default_visibility = [
     "{}:__pkg__".format(PKG_NAME),
 ])
 
-load("@cef//bazel/win:exe_helpers.bzl", "declare_exe")
-
 #
-# Windows executable target.
+# Windows DLL target (sandbox enabled).
 #
 
-declare_exe(
+load("@cef//bazel/win:exe_helpers.bzl", "declare_dll")
+
+declare_dll(
     name = PRODUCT_NAME,
     srcs = [
         "{}:SrcsWin".format(PKG_NAME),
         "//examples/shared:SrcsWin",
     ],
     rc_file = "resource.rc",
-    manifest_srcs = [
-        "//examples/shared:compatibility.manifest",
-        "//examples/shared:shared.exe.manifest",
-    ],
     resources_srcs = [
         "{}:Resources".format(PKG_NAME),
         "//examples/shared:ResourcesWin",
@@ -35,7 +31,38 @@ declare_exe(
         "{}:ResourceH".format(PKG_NAME),
         "//examples/shared:ResourceH",
     ],
-    linkopts = [
-        "/SUBSYSTEM:WINDOWS",
+    local_defines = [
+        # Enable use of the bootstrap executable.
+        "CEF_USE_BOOTSTRAP",
     ],
 )
+
+#
+# Windows executable target (sandbox disabled).
+#
+
+# load("@cef//bazel/win:exe_helpers.bzl", "declare_exe")
+#
+# declare_exe(
+#     name = PRODUCT_NAME,
+#     srcs = [
+#         "{}:SrcsWin".format(PKG_NAME),
+#         "//examples/shared:SrcsWin",
+#     ],
+#     rc_file = "resource.rc",
+#     manifest_srcs = [
+#         "//examples/shared:compatibility.manifest",
+#         "//examples/shared:shared.exe.manifest",
+#     ],
+#     resources_srcs = [
+#         "{}:Resources".format(PKG_NAME),
+#         "//examples/shared:ResourcesWin",
+#     ],
+#     resources_deps = [
+#         "{}:ResourceH".format(PKG_NAME),
+#         "//examples/shared:ResourceH",
+#     ],
+#     linkopts = [
+#         "/SUBSYSTEM:WINDOWS",
+#     ],
+# )

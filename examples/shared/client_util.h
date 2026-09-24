@@ -17,21 +17,21 @@ void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title);
 
 // Called from CefLifeSpanHandler methods:
 void OnAfterCreated(CefRefPtr<CefBrowser> browser);
-bool DoClose(CefRefPtr<CefBrowser> browser);
+[[nodiscard]] bool DoClose(CefRefPtr<CefBrowser> browser);
 void OnBeforeClose(CefRefPtr<CefBrowser> browser);
 
 // Platform-specific implementation.
 void PlatformTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title);
 
 // Returns the contents of |request| as a string.
-std::string DumpRequestContents(CefRefPtr<CefRequest> request);
+[[nodiscard]] std::string DumpRequestContents(CefRefPtr<CefRequest> request);
 
 // Returns true if use of the Views framework is enabled. Otherwise, a native
 // parent window will be used.
-bool IsViewsEnabled();
+[[nodiscard]] bool IsViewsEnabled();
 
 // Returns true if Alloy style is enabled. Otherwise, Chrome style will be used.
-bool IsAlloyStyleEnabled();
+[[nodiscard]] bool IsAlloyStyleEnabled();
 
 }  // namespace shared
 

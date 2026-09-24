@@ -1,9 +1,9 @@
-The [Chromium Embedded Framework](https://bitbucket.org/chromiumembedded/cef/) (CEF) is a simple framework for embedding Chromium-based browsers in other applications. This repository hosts a sample project called "cef-project" that can be used as the starting point for third-party applications built using CEF.
+The [Chromium Embedded Framework](https://github.com/chromiumembedded/cef/) (CEF) is a simple framework for embedding Chromium-based browsers in other applications. This repository hosts a sample project called "cef-project" that can be used as the starting point for third-party applications built using CEF.
 
 # Quick Links
 
-* Project Page - https://bitbucket.org/chromiumembedded/cef-project
-* Tutorial - https://bitbucket.org/chromiumembedded/cef/wiki/Tutorial
+* Project Page - https://github.com/chromiumembedded/cef-project
+* Tutorial - https://chromiumembedded.github.io/cef/tutorial
 * Support Forum - http://www.magpcss.org/ceforum/
 
 # Setup
@@ -15,13 +15,13 @@ First install some necessary tools and download the cef-project source code.
 2\. Install platform-specific build tools.
 
 * Linux: Currently supported distributions include Debian 10 (Buster), Ubuntu 18 (Bionic Beaver), and related, with minimum GCC version 7.5.0. Ubuntu 22.04 64-bit with GCC 11+ is recommended. Newer versions will likely also work but may not have been tested. Required packages include: build-essential, libgtk-3-dev.
-* MacOS: Xcode 12.2 to 15.0 building on MacOS 10.15.4 (Catalina) or newer. The Xcode command-line tools must also be installed.
+* MacOS: Xcode 13.5 to 16.4 building on MacOS 12.0 (Monterey) or newer. The Xcode command-line tools must also be installed. Newer Xcode versions may not have been tested and are not recommended.
 * Windows: Visual Studio 2022 building on Windows 10 or newer. Windows 10/11 64-bit is recommended.
 
 3\. Download the cef-project source code from the [Downloads page](https://bitbucket.org/chromiumembedded/cef-project/downloads) or by using [Git](https://git-scm.com/) command-line tools:
 
 ```
-git clone https://bitbucket.org/chromiumembedded/cef-project.git
+git clone https://github.com/chromiumembedded/cef-project.git
 ```
 
 # Build
@@ -79,7 +79,7 @@ cmake -G "Visual Studio 17" -A arm64 ..
 CMake supports different generators on each platform. Run `cmake --help` to list all supported generators. Generators that have been tested with CEF include:
 
 * Linux: Ninja, GCC 7.5.0+, Unix Makefiles
-* MacOS: Ninja, Xcode 12.2 to 15.0
+* MacOS: Ninja, Xcode 13.5 to 16.4
 * Windows: Ninja, Visual Studio 2022+
 
 Ninja is a cross-platform open-source tool for running fast builds using pre-installed platform toolchains (GNU, clang, Xcode or MSVC). See comments in the "third_party/cef/cef_binary_*/CMakeLists.txt" file for Ninja usage instructions.
@@ -140,8 +140,8 @@ CEF provides a number of examples that you can use as a starting point or refere
 
 * By default all example targets will be included in the project files generated using CMake.
 * The CEF binary distribution includes cefsimple and cefclient sample applications.
-    * The cefsimple application demonstrates the minimal implementation required for a standalone executable target and is described on the [Tutorial](https://bitbucket.org/chromiumembedded/cef/wiki/Tutorial.md) Wiki page.
-    * The cefclient application demonstrates a wide range of CEF functionality most of which is documented on the [GeneralUsage](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md) Wiki page.
+    * The cefsimple application demonstrates the minimal implementation required for a standalone executable target and is described on the [Tutorial](https://chromiumembedded.github.io/cef/tutorial) Wiki page.
+    * The cefclient application demonstrates a wide range of CEF functionality most of which is documented on the [General Usage](https://chromiumembedded.github.io/cef/general_usage) Wiki page.
 * The [examples directory](examples) contains example targets that demonstrate specific aspects of CEF functionality.
     * See the [examples README.md file](examples/README.md) for information about the examples targets.
     * Using CMake: Add `-DWITH_EXAMPLES=Off` to the CMake command-line if you do not wish to build the examples targets.
@@ -154,7 +154,7 @@ Here are some activities you might want to try next to gain a better understandi
 
 * Visit the [Spotify automated builder](https://cef-builds.spotifycdn.com/index.html) page to see what CEF versions are available.
 * Using CMake:
-    * Change the "CEF_VERSION" value near the top of the [top-level CMakeLists.txt file](https://bitbucket.org/chromiumembedded/cef-project/src/master/CMakeLists.txt?fileviewer=file-view-default).
+    * Change the "CEF_VERSION" value near the top of the [top-level CMakeLists.txt file](https://github.com/chromiumembedded/cef-project/blob/master/CMakeLists.txt).
     * Re-run the CMake and build commands. Add `-DWITH_EXAMPLES=Off` to the CMake command-line to disable targets from the [examples directory](examples) because they may not build successfully with the new CEF version.
 * Using Bazel:
     * Run the `./tools/bazel/version_updater.py` script to update the CEF version (see command output for details).
@@ -166,18 +166,18 @@ Here are some activities you might want to try next to gain a better understandi
 * Copy the contents of the "third_party/cef/cef_binary_*/tests/cefsimple" directory to "myproject" as a starting point.
 * Replace all instances of "cefsimple" with "myproject" and "tests" with "examples" in file names and file contents.
 * Using CMake:
-    * Add a new `add_subdirectory(myproject)` command near the end of [top-level CMakeLists.txt file](https://bitbucket.org/chromiumembedded/cef-project/src/master/CMakeLists.txt?fileviewer=file-view-default) after the existing add_subdirectory commands.
+    * Add a new `add_subdirectory(myproject)` command near the end of [top-level CMakeLists.txt file](https://github.com/chromiumembedded/cef-project/blob/master/CMakeLists.txt) after the existing add_subdirectory commands.
     * Re-run the cmake and build commands.
 * Using Bazel:
     * In all copied `BUILD.bazel` files change `load("//bazel...` to `load("@cef//bazel...`
     * Build and run the `//examples/myproject` target. See instructions above.
 
-3\. Gain a better understanding of the cefsimple application by reading the [Tutorial](https://bitbucket.org/chromiumembedded/cef/wiki/Tutorial.md) Wiki page.
+3\. Gain a better understanding of the cefsimple application by reading the [Tutorial](https://chromiumembedded.github.io/cef/tutorial) Wiki page.
 
-4\. Fork the cef-project repository using Bitbucket and Git to store the source code for your own CEF-based project. See the [ContributingWithGit](https://bitbucket.org/chromiumembedded/cef/wiki/ContributingWithGit.md) Wiki page for details (replace all instances of "cef" with "cef-project" in those instructions).
+4\. Fork the cef-project repository using GitHub and Git to store the source code for your own CEF-based project. See the [Contributing With Git](https://chromiumembedded.github.io/cef/contributing_with_git) Wiki page for details (replace all instances of "cef" with "cef-project" in those instructions).
 
-5\. Review the [GeneralUsage](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md) Wiki page for additional details on CEF implementation and usage.
+5\. Review the [General Usage](https://chromiumembedded.github.io/cef/general_usage) Wiki page for additional details on CEF implementation and usage.
 
 # Support and Contributions
 
-If you have any questions about CEF or cef-project please ask on the [CEF Forum](http://www.magpcss.org/ceforum/). If you would like to make contributions please see the "Helping Out" section of the [CEF Main Page](https://bitbucket.org/chromiumembedded/cef/).
+If you have any questions about CEF or cef-project please ask on the [CEF Forum](http://www.magpcss.org/ceforum/). If you would like to make contributions please see the "Helping Out" section of the [CEF Main Page](https://github.com/chromiumembedded/cef/).

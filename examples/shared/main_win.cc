@@ -6,29 +6,14 @@
 
 #include <windows.h>
 
-#include "include/cef_sandbox_win.h"
-
 #include "examples/shared/app_factory.h"
 #include "examples/shared/client_manager.h"
 #include "examples/shared/main_util.h"
 
-// When generating projects with CMake the CEF_USE_SANDBOX value will be defined
-// automatically if using the required compiler version. Pass -DUSE_SANDBOX=OFF
-// to the CMake command-line to disable use of the sandbox.
-
 namespace shared {
 
 // Entry point function for all processes.
-int APIENTRY wWinMain(HINSTANCE hInstance) {
-  void* sandbox_info = nullptr;
-
-#if defined(CEF_USE_SANDBOX)
-  // Manage the life span of the sandbox information object. This is necessary
-  // for sandbox support on Windows. See cef_sandbox_win.h for complete details.
-  CefScopedSandboxInfo scoped_sandbox;
-  sandbox_info = scoped_sandbox.sandbox_info();
-#endif
-
+int APIENTRY wWinMain(HINSTANCE hInstance, void* sandbox_info) {
   // Provide CEF with command-line arguments.
   CefMainArgs main_args(hInstance);
 
@@ -64,9 +49,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance) {
   // Specify CEF global settings here.
   CefSettings settings;
 
-#if !defined(CEF_USE_SANDBOX)
-  settings.no_sandbox = true;
-#endif
+  if (!sandbox_info) {
+    settings.no_sandbox = true;
+  }
 
   // Initialize the CEF browser process. The first browser instance will be
   // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has

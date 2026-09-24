@@ -11,7 +11,9 @@ namespace message_router {
 // Implementation of CefApp for the renderer process.
 class RendererApp : public CefApp, public CefRenderProcessHandler {
  public:
-  RendererApp() {}
+  RendererApp() = default;
+  RendererApp(const RendererApp&) = delete;
+  RendererApp& operator=(const RendererApp&) = delete;
 
   // CefApp methods:
   CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
@@ -50,7 +52,6 @@ class RendererApp : public CefApp, public CefRenderProcessHandler {
   CefRefPtr<CefMessageRouterRendererSide> message_router_;
 
   IMPLEMENT_REFCOUNTING(RendererApp);
-  DISALLOW_COPY_AND_ASSIGN(RendererApp);
 };
 
 }  // namespace message_router

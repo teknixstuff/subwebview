@@ -6,7 +6,7 @@
 
 namespace shared {
 
-int GetResourceId(const std::string& resource_path) {
+int GetResourceId(std::string_view resource_path) {
   // Nothing to do here.
   return 0;
 }

@@ -11,7 +11,9 @@ namespace scheme_handler {
 // Implementation of CefApp for all subprocesses.
 class SubprocessApp : public CefApp {
  public:
-  SubprocessApp() {}
+  SubprocessApp() = default;
+  SubprocessApp(const SubprocessApp&) = delete;
+  SubprocessApp& operator=(const SubprocessApp&) = delete;
 
   // CefApp methods:
   void OnRegisterCustomSchemes(
@@ -23,7 +25,6 @@ class SubprocessApp : public CefApp {
 
  private:
   IMPLEMENT_REFCOUNTING(SubprocessApp);
-  DISALLOW_COPY_AND_ASSIGN(SubprocessApp);
 };
 
 }  // namespace scheme_handler

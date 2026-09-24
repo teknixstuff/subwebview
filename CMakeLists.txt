@@ -22,7 +22,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #
 
 # Specify the CEF distribution version.
-set(CEF_VERSION "130.1.14+gde32089+chromium-130.0.6723.92")
+set(CEF_VERSION "152.0.5+gb129680+chromium-152.0.7977.54")
+set(CEF_CHANNEL "")
 
 # Determine the platform.
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
@@ -40,7 +41,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm")
     set(CEF_PLATFORM "linuxarm")
-  elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(CEF_PLATFORM "linuxarm64")
   elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
     set(CEF_PLATFORM "linux64")
@@ -62,7 +63,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Download and extract the CEF binary distribution (executes DownloadCEF.cmake).
 include(DownloadCEF)
-DownloadCEF("${CEF_PLATFORM}" "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/third_party/cef")
+DownloadCEF("${CEF_PLATFORM}" "${CEF_CHANNEL}" "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/third_party/cef")
 
 # Add the CEF binary distribution's cmake/ directory to the module path.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
@@ -142,12 +143,6 @@ endif()
 
 # Include the libcef_dll_wrapper target (executes libcef_dll/CMakeLists.txt).
 add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
-
-# Include CEF's test application targets (executes <target>/CMakeLists.txt).
-add_subdirectory(${CEF_ROOT}/tests/cefclient)
-add_subdirectory(${CEF_ROOT}/tests/cefsimple)
-add_subdirectory(${CEF_ROOT}/tests/gtest)
-add_subdirectory(${CEF_ROOT}/tests/ceftests)
 
 # Allow includes relative to the current source directory.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

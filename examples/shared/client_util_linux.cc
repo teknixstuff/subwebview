@@ -6,6 +6,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <array>
 #include <string>
 
 #include "include/base/cef_logging.h"
@@ -26,10 +27,10 @@ void PlatformTitleChange(CefRefPtr<CefBrowser> browser,
   DCHECK(window != kNullWindowHandle);
 
   // Retrieve the atoms required by the below XChangeProperty call.
-  const char* kAtoms[] = {"_NET_WM_NAME", "UTF8_STRING"};
-  Atom atoms[2];
-  int result =
-      XInternAtoms(display, const_cast<char**>(kAtoms), 2, false, atoms);
+  constexpr std::array<const char*, 2> kAtoms = {"_NET_WM_NAME", "UTF8_STRING"};
+  std::array<Atom, 2> atoms{};
+  int result = XInternAtoms(display, const_cast<char**>(kAtoms.data()), 2,
+                            false, atoms.data());
   if (!result)
     NOTREACHED();
 

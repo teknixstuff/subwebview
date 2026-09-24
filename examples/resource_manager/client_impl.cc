@@ -22,6 +22,9 @@ class RequestDumpResourceProvider : public CefResourceManager::Provider {
   explicit RequestDumpResourceProvider(const std::string& url) : url_(url) {
     DCHECK(!url.empty());
   }
+  RequestDumpResourceProvider(const RequestDumpResourceProvider&) = delete;
+  RequestDumpResourceProvider& operator=(const RequestDumpResourceProvider&) =
+      delete;
 
   bool OnRequest(scoped_refptr<CefResourceManager::Request> request) override {
     CEF_REQUIRE_IO_THREAD();
@@ -44,8 +47,6 @@ class RequestDumpResourceProvider : public CefResourceManager::Provider {
 
  private:
   std::string url_;
-
-  DISALLOW_COPY_AND_ASSIGN(RequestDumpResourceProvider);
 };
 
 // Add example Providers to the CefResourceManager.

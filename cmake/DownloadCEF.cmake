@@ -8,9 +8,15 @@
 # Visit https://cef-builds.spotifycdn.com/index.html for the list of
 # supported platforms and versions.
 
-function(DownloadCEF platform version download_dir)
+function(DownloadCEF platform channel version download_dir)
+  if(channel STREQUAL "beta")
+    set(channel_part "_beta")
+  else()
+    set(channel_part "")
+  endif()
+
   # Specify the binary distribution type and download directory.
-  set(CEF_DISTRIBUTION "cef_binary_${version}_${platform}")
+  set(CEF_DISTRIBUTION "cef_binary_${version}_${platform}${channel_part}")
   set(CEF_DOWNLOAD_DIR "${download_dir}")
 
   # The location where we expect the extracted binary distribution.

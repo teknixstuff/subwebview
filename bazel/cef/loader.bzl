@@ -4,16 +4,17 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(":platform.bzl", "CEF_PLATFORM")
-load(":version.bzl", "CEF_DOWNLOAD_URL", "CEF_VERSION", "CEF_FILE_SHA256")
+load(":version.bzl", "CEF_DOWNLOAD_URL", "CEF_VERSION", "CEF_CHANNEL", "CEF_FILE_SHA256")
 
 def load_cef_repo(name = "cef",
                   version = CEF_VERSION,
                   platform = CEF_PLATFORM,
+                  channel = CEF_CHANNEL,
                   url = CEF_DOWNLOAD_URL):
     """
     Download, extract and load a CEF binary distribution.
     """
-    file_name = "cef_binary_{}_{}".format(version, platform)
+    file_name = "cef_binary_{}_{}{}".format(version, platform, channel)
 
     http_archive(
         name = name,
@@ -26,12 +27,13 @@ def load_cef_repo(name = "cef",
 def load_local_cef_repo(path,
                         name = "cef",
                         version = CEF_VERSION,
-                        platform = CEF_PLATFORM):
+                        platform = CEF_PLATFORM,
+                        channel = CEF_CHANNEL):
     """
     Load an already downloaded/extracted CEF binary distribution.
     """
     native.local_repository(
         name = "cef",
-        path = "{}/cef_binary_{}_{}".format(path, version, platform),
+        path = "{}/cef_binary_{}_{}{}".format(path, version, platform, channel),
         repo_mapping = {"@cef": "@{}".format(name)}
     )

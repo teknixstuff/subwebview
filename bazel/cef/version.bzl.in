@@ -7,6 +7,7 @@ ${description}
 CEF_DOWNLOAD_URL = "${url}"
 
 CEF_VERSION = "${version}"
+CEF_CHANNEL = "${channel}"
 
 # Map of supported platform to sha256 for binary distribution download.
 CEF_FILE_SHA256 = {

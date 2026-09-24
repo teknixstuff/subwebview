@@ -107,12 +107,6 @@ if(OS_MAC)
   add_dependencies(${SHARED_HELPER_TARGET} libcef_dll_wrapper)
   target_link_libraries(${SHARED_HELPER_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
 
-  if(USE_SANDBOX)
-    # Logical target used to link the cef_sandbox library.
-    ADD_LOGICAL_TARGET("cef_sandbox_lib" "${CEF_SANDBOX_LIB_DEBUG}" "${CEF_SANDBOX_LIB_RELEASE}")
-    target_link_libraries(${SHARED_HELPER_TARGET} cef_sandbox_lib)
-  endif()
-
   # Main static library target.
   add_library(${SHARED_TARGET} STATIC ${SHARED_SRCS})
   SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES(${SHARED_TARGET})
@@ -129,16 +123,15 @@ if(OS_WINDOWS)
   # Create source groups for Visual Studio.
   SET_EXAMPLE_SOURCE_GROUPS("${SHARED_SRCS}")
 
-  # Executable target.
+  # Static library target.
   add_library(${SHARED_TARGET} STATIC ${SHARED_SRCS})
   SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES(${SHARED_TARGET})
   add_dependencies(${SHARED_TARGET} libcef_dll_wrapper)
   target_link_libraries(${SHARED_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
 
   if(USE_SANDBOX)
-    # Logical target used to link the cef_sandbox library.
-    ADD_LOGICAL_TARGET("cef_sandbox_lib" "${CEF_SANDBOX_LIB_DEBUG}" "${CEF_SANDBOX_LIB_RELEASE}")
-    target_link_libraries(${SHARED_TARGET} cef_sandbox_lib ${CEF_SANDBOX_STANDARD_LIBS})
+    # Set LPAC ACLs required for Windows sandbox support.
+    SET_LPAC_ACLS("${SHARED_TARGET}")
   endif()
 
   # Copy binary and resource files to the target output directory.

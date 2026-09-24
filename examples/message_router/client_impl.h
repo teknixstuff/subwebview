@@ -18,6 +18,8 @@ class Client : public CefClient,
                public CefResourceRequestHandler {
  public:
   explicit Client(const CefString& startup_url);
+  Client(const Client&) = delete;
+  Client& operator=(const Client&) = delete;
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
@@ -73,7 +75,6 @@ class Client : public CefClient,
   int browser_ct_;
 
   IMPLEMENT_REFCOUNTING(Client);
-  DISALLOW_COPY_AND_ASSIGN(Client);
 };
 
 }  // namespace message_router

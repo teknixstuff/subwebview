@@ -21,6 +21,8 @@ class WindowDelegate : public CefWindowDelegate {
   WindowDelegate(CefRefPtr<CefBrowserView> browser_view,
                  cef_runtime_style_t runtime_style)
       : browser_view_(browser_view), runtime_style_(runtime_style) {}
+  WindowDelegate(const WindowDelegate&) = delete;
+  WindowDelegate& operator=(const WindowDelegate&) = delete;
 
   void OnWindowCreated(CefRefPtr<CefWindow> window) override {
     // Add the browser view and show the window.
@@ -37,7 +39,7 @@ class WindowDelegate : public CefWindowDelegate {
 
   bool CanClose(CefRefPtr<CefWindow> window) override {
     // Allow the window to close if the browser says it's OK.
-    CefRefPtr<CefBrowser> browser = browser_view_->GetBrowser();
+    auto browser = browser_view_->GetBrowser();
     if (browser)
       return browser->GetHost()->TryCloseBrowser();
     return true;
@@ -62,13 +64,14 @@ class WindowDelegate : public CefWindowDelegate {
   const cef_runtime_style_t runtime_style_;
 
   IMPLEMENT_REFCOUNTING(WindowDelegate);
-  DISALLOW_COPY_AND_ASSIGN(WindowDelegate);
 };
 
 class BrowserViewDelegate : public CefBrowserViewDelegate {
  public:
   explicit BrowserViewDelegate(cef_runtime_style_t runtime_style)
       : runtime_style_(runtime_style) {}
+  BrowserViewDelegate(const BrowserViewDelegate&) = delete;
+  BrowserViewDelegate& operator=(const BrowserViewDelegate&) = delete;
 
   bool OnPopupBrowserViewCreated(CefRefPtr<CefBrowserView> browser_view,
                                  CefRefPtr<CefBrowserView> popup_browser_view,
@@ -90,7 +93,6 @@ class BrowserViewDelegate : public CefBrowserViewDelegate {
   const cef_runtime_style_t runtime_style_;
 
   IMPLEMENT_REFCOUNTING(BrowserViewDelegate);
-  DISALLOW_COPY_AND_ASSIGN(BrowserViewDelegate);
 };
 
 }  // namespace
@@ -108,7 +110,7 @@ void CreateBrowser(CefRefPtr<CefClient> client,
   // create the browser using the native platform framework.
   if (IsViewsEnabled()) {
     // Create the BrowserView.
-    CefRefPtr<CefBrowserView> browser_view = CefBrowserView::CreateBrowserView(
+    auto browser_view = CefBrowserView::CreateBrowserView(
         client, startup_url, settings, nullptr, nullptr,
         new BrowserViewDelegate(runtime_style));
 

@@ -25,6 +25,8 @@ namespace {
 class ClientSchemeHandler : public CefResourceHandler {
  public:
   ClientSchemeHandler() : offset_(0) {}
+  ClientSchemeHandler(const ClientSchemeHandler&) = delete;
+  ClientSchemeHandler& operator=(const ClientSchemeHandler&) = delete;
 
   bool ProcessRequest(CefRefPtr<CefRequest> request,
                       CefRefPtr<CefCallback> callback) override {
@@ -106,13 +108,15 @@ class ClientSchemeHandler : public CefResourceHandler {
   size_t offset_;
 
   IMPLEMENT_REFCOUNTING(ClientSchemeHandler);
-  DISALLOW_COPY_AND_ASSIGN(ClientSchemeHandler);
 };
 
 // Implementation of the factory for creating scheme handlers.
 class ClientSchemeHandlerFactory : public CefSchemeHandlerFactory {
  public:
-  ClientSchemeHandlerFactory() {}
+  ClientSchemeHandlerFactory() = default;
+  ClientSchemeHandlerFactory(const ClientSchemeHandlerFactory&) = delete;
+  ClientSchemeHandlerFactory& operator=(const ClientSchemeHandlerFactory&) =
+      delete;
 
   // Return a new scheme handler instance to handle the request.
   CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser,
@@ -125,7 +129,6 @@ class ClientSchemeHandlerFactory : public CefSchemeHandlerFactory {
 
  private:
   IMPLEMENT_REFCOUNTING(ClientSchemeHandlerFactory);
-  DISALLOW_COPY_AND_ASSIGN(ClientSchemeHandlerFactory);
 };
 
 }  // namespace

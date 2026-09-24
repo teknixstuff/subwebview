@@ -12,9 +12,20 @@ namespace shared {
 
 namespace {
 
+// Returns the module handle that contains this code. When built as a DLL this
+// will be the DLL handle instead of the EXE handle.
+HINSTANCE GetCodeModuleHandle() {
+  HMODULE hModule = nullptr;
+  CHECK(::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                            reinterpret_cast<LPCWSTR>(GetCodeModuleHandle),
+                            &hModule));
+  return hModule;
+}
+
 // Retrieve the contents of a BINARY resource from the current executable.
 bool LoadBinaryResource(int binaryId, DWORD& dwSize, LPBYTE& pBytes) {
-  HINSTANCE hInst = GetModuleHandle(nullptr);
+  HINSTANCE hInst = GetCodeModuleHandle();
   HRSRC hRes =
       FindResource(hInst, MAKEINTRESOURCE(binaryId), MAKEINTRESOURCE(256));
   if (hRes) {
@@ -38,6 +49,8 @@ class BinaryResourceProvider : public CefResourceManager::Provider {
       : root_url_(root_url) {
     DCHECK(!root_url.empty());
   }
+  BinaryResourceProvider(const BinaryResourceProvider&) = delete;
+  BinaryResourceProvider& operator=(const BinaryResourceProvider&) = delete;
 
   bool OnRequest(scoped_refptr<CefResourceManager::Request> request) override {
     CEF_REQUIRE_IO_THREAD();
@@ -66,19 +79,16 @@ class BinaryResourceProvider : public CefResourceManager::Provider {
 
  private:
   std::string root_url_;
-
-  DISALLOW_COPY_AND_ASSIGN(BinaryResourceProvider);
 };
 
 }  // namespace
 
 CefResourceManager::Provider* CreateBinaryResourceProvider(
-    const std::string& url_path) {
-  return new BinaryResourceProvider(url_path);
+    std::string_view url_path) {
+  return new BinaryResourceProvider(std::string(url_path));
 }
 
-bool GetResourceString(const std::string& resource_path,
-                       std::string& out_data) {
+bool GetResourceString(std::string_view resource_path, std::string& out_data) {
   int resource_id = GetResourceId(resource_path);
   if (resource_id == 0)
     return false;
@@ -95,7 +105,7 @@ bool GetResourceString(const std::string& resource_path,
   return false;
 }
 
-CefRefPtr<CefStreamReader> GetResourceReader(const std::string& resource_path) {
+CefRefPtr<CefStreamReader> GetResourceReader(std::string_view resource_path) {
   int resource_id = GetResourceId(resource_path);
   if (resource_id == 0)
     return nullptr;

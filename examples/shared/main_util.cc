@@ -13,10 +13,10 @@ namespace shared {
 namespace {
 
 // These flags must match the Chromium values.
-const char kProcessType[] = "type";
-const char kRendererProcess[] = "renderer";
+constexpr char kProcessType[] = "type";
+constexpr char kRendererProcess[] = "renderer";
 #if defined(OS_LINUX)
-const char kZygoteProcess[] = "zygote";
+constexpr char kZygoteProcess[] = "zygote";
 #endif
 
 }  // namespace

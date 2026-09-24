@@ -15,7 +15,7 @@ namespace shared {
 
 // Entry point function shared by executable targets.
 #if defined(OS_WIN)
-int APIENTRY wWinMain(HINSTANCE hInstance);
+int APIENTRY wWinMain(HINSTANCE hInstance, void* sandbox_info);
 #else
 int main(int argc, char* argv[]);
 #endif

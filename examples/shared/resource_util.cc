@@ -9,36 +9,34 @@
 
 namespace shared {
 
-const char kTestOrigin[] = "https://example.com/";
-
 namespace {
 
 // Returns |url| without the query or fragment components, if any.
-std::string GetUrlWithoutQueryOrFragment(const std::string& url) {
+std::string GetUrlWithoutQueryOrFragment(std::string_view url) {
   // Find the first instance of '?' or '#'.
   const size_t pos = std::min(url.find('?'), url.find('#'));
   if (pos != std::string::npos)
-    return url.substr(0, pos);
+    return std::string(url.substr(0, pos));
 
-  return url;
+  return std::string(url);
 }
 
 }  // namespace
 
-std::string GetResourcePath(const std::string& url) {
+std::optional<std::string> GetResourcePath(std::string_view url) {
   if (url.find(kTestOrigin) != 0U)
-    return std::string();
+    return std::nullopt;
 
-  const std::string& url_no_query = GetUrlWithoutQueryOrFragment(url);
+  const std::string url_no_query = GetUrlWithoutQueryOrFragment(url);
   return url_no_query.substr(sizeof(kTestOrigin) - 1);
 }
 
 // Determine the mime type based on the |file_path| file extension.
-std::string GetMimeType(const std::string& resource_path) {
+std::string GetMimeType(std::string_view resource_path) {
   std::string mime_type;
   size_t sep = resource_path.find_last_of(".");
   if (sep != std::string::npos) {
-    mime_type = CefGetMimeType(resource_path.substr(sep + 1));
+    mime_type = CefGetMimeType(std::string(resource_path.substr(sep + 1)));
     if (!mime_type.empty())
       return mime_type;
   }
@@ -46,8 +44,8 @@ std::string GetMimeType(const std::string& resource_path) {
 }
 
 CefRefPtr<CefResourceHandler> GetResourceHandler(
-    const std::string& resource_path) {
-  CefRefPtr<CefStreamReader> reader = GetResourceReader(resource_path);
+    std::string_view resource_path) {
+  auto reader = GetResourceReader(resource_path);
   if (!reader)
     return nullptr;
 

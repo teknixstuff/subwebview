@@ -8,7 +8,7 @@
 
 namespace shared {
 
-int GetResourceId(const std::string& resource_path) {
+int GetResourceId(std::string_view resource_path) {
   if (resource_path == "message_router.html")
     return IDS_MESSAGE_ROUTER_HTML;
   return 0;

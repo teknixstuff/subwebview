@@ -18,6 +18,8 @@ class Client : public CefClient,
                public CefResourceRequestHandler {
  public:
   Client();
+  Client(const Client&) = delete;
+  Client& operator=(const Client&) = delete;
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
@@ -59,7 +61,6 @@ class Client : public CefClient,
   CefRefPtr<CefResourceManager> resource_manager_;
 
   IMPLEMENT_REFCOUNTING(Client);
-  DISALLOW_COPY_AND_ASSIGN(Client);
 };
 
 }  // namespace resource_manager

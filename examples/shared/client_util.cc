@@ -19,11 +19,10 @@ namespace shared {
 void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
   CEF_REQUIRE_UI_THREAD();
 
-  CefRefPtr<CefBrowserView> browser_view =
-      CefBrowserView::GetForBrowser(browser);
+  auto browser_view = CefBrowserView::GetForBrowser(browser);
   if (browser_view) {
     // Set the title of the window using the Views framework.
-    CefRefPtr<CefWindow> window = browser_view->GetWindow();
+    auto window = browser_view->GetWindow();
     if (window)
       window->SetTitle(title);
   } else {
@@ -69,23 +68,18 @@ std::string DumpRequestContents(CefRefPtr<CefRequest> request) {
   request->GetHeaderMap(headerMap);
   if (headerMap.size() > 0) {
     ss << "\nHeaders:";
-    CefRequest::HeaderMap::const_iterator it = headerMap.begin();
-    for (; it != headerMap.end(); ++it) {
-      ss << "\n\t" << std::string((*it).first) << ": "
-         << std::string((*it).second);
+    for (const auto& [key, value] : headerMap) {
+      ss << "\n\t" << std::string(key) << ": " << std::string(value);
     }
   }
 
-  CefRefPtr<CefPostData> postData = request->GetPostData();
+  auto postData = request->GetPostData();
   if (postData.get()) {
     CefPostData::ElementVector elements;
     postData->GetElements(elements);
     if (elements.size() > 0) {
       ss << "\nPost Data:";
-      CefRefPtr<CefPostDataElement> element;
-      CefPostData::ElementVector::const_iterator it = elements.begin();
-      for (; it != elements.end(); ++it) {
-        element = (*it);
+      for (const auto& element : elements) {
         if (element->GetType() == PDE_TYPE_BYTES) {
           // the element is composed of bytes
           ss << "\n\tBytes: ";
@@ -93,11 +87,10 @@ std::string DumpRequestContents(CefRefPtr<CefRequest> request) {
             ss << "(empty)";
           } else {
             // retrieve the data.
-            size_t size = element->GetBytesCount();
-            char* bytes = new char[size];
-            element->GetBytes(size, bytes);
-            ss << std::string(bytes, size);
-            delete[] bytes;
+            auto size = element->GetBytesCount();
+            std::vector<char> bytes(size);
+            element->GetBytes(size, bytes.data());
+            ss << std::string(bytes.data(), size);
           }
         } else if (element->GetType() == PDE_TYPE_FILE) {
           ss << "\n\tFile: " << std::string(element->GetFile());

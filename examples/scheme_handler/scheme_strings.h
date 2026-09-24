@@ -5,14 +5,18 @@
 #ifndef CEF_EXAMPLES_SCHEME_HANDLER_SCHEME_STRINGS_H_
 #define CEF_EXAMPLES_SCHEME_HANDLER_SCHEME_STRINGS_H_
 
+#include "include/internal/cef_types.h"
+
 namespace scheme_handler {
 
-extern const char kScheme[];
-extern const char kDomain[];
-extern const char kFileName[];
+inline constexpr char kScheme[] = "client";
+inline constexpr char kDomain[] = "tests";
+inline constexpr char kFileName[] = "scheme_handler.html";
 
 // Used to register a custom scheme as standard and secure.
-extern const int kSchemeRegistrationOptions;
+inline constexpr int kSchemeRegistrationOptions =
+    CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_SECURE |
+    CEF_SCHEME_OPTION_CORS_ENABLED | CEF_SCHEME_OPTION_FETCH_ENABLED;
 
 }  // namespace scheme_handler
 

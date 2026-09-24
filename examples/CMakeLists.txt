@@ -16,8 +16,9 @@ if(OS_MAC)
     )
 
   # Info.plist files used for main and helper app bundles.
-  set(SHARED_INFO_PLIST ../shared/mac/Info.plist.in)
-  set(SHARED_HELPER_INFO_PLIST ../shared/mac/helper-Info.plist.in)
+  # Use absolute paths to avoid duplicate output errors with the Ninja generator.
+  set(SHARED_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/Info.plist.in)
+  set(SHARED_HELPER_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/helper-Info.plist.in)
 elseif(OS_WINDOWS)
   # Shared Windows resources (version information, icons).
   set(SHARED_RESOURCES_SRCS
@@ -66,6 +67,7 @@ if(GEN_NINJA OR GEN_MAKEFILES)
 else()
   set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 endif()
+set(CEF_TARGET_OUT_DIR "${EXAMPLE_TARGET_OUT_DIR}")
 
 # Set properties common to all example targets.
 macro(SET_EXAMPLE_PROPERTIES target)
@@ -110,29 +112,6 @@ macro(SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES target)
   endif()
 endmacro()
 
-# Set properties on an example executable target.
-macro(SET_EXAMPLE_DLL_TARGET_PROPERTIES target)
-  SET_EXECUTABLE_TARGET_PROPERTIES(${target})
-  SET_EXAMPLE_PROPERTIES(${target})
-
-  if(OS_LINUX)
-    # Set rpath so that libraries can be placed next to the executable.
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-    set_target_properties(${target} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-  elseif(OS_WINDOWS)
-    # Add the custom Windows manifest files to the executable.
-    add_custom_command(
-      TARGET ${target}
-      POST_BUILD
-      COMMAND "mt.exe" -nologo
-              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
-                        \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
-              -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.dll"\;\#1
-      COMMENT "Adding manifest..."
-      )
-  endif()
-endmacro()
-
 
 #
 # Target configuration.
@@ -142,9 +121,8 @@ endmacro()
 add_subdirectory(shared)
 
 # Example executable targets.
-# add_subdirectory(message_router)
-# add_subdirectory(minimal)
-# add_subdirectory(resource_manager)
-# add_subdirectory(scheme_handler)
+#add_subdirectory(message_router)
+#add_subdirectory(minimal)
+#add_subdirectory(resource_manager)
+#add_subdirectory(scheme_handler)
 add_subdirectory(npWebView)
-add_subdirectory(npWebViewIE)

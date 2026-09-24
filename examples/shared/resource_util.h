@@ -5,7 +5,9 @@
 #ifndef CEF_EXAMPLES_SHARED_RESOURCE_UTIL_H_
 #define CEF_EXAMPLES_SHARED_RESOURCE_UTIL_H_
 
+#include <optional>
 #include <string>
+#include <string_view>
 
 #include "include/cef_resource_handler.h"
 #include "include/cef_stream.h"
@@ -23,7 +25,7 @@ namespace shared {
 // the executable (see GetResourceId comments for details).
 
 // Origin for loading local test resources.
-extern const char kTestOrigin[];
+inline constexpr char kTestOrigin[] = "https://example.com/";
 
 #if defined(OS_POSIX)
 // Retrieve the directory containing resource files on Linux and macOS.
@@ -32,10 +34,10 @@ bool GetResourceDir(std::string& dir);
 
 // Returns the resource path for |url|. Removes fragment and/or query component
 // if it exists. The URL must start with kTestOrigin.
-std::string GetResourcePath(const std::string& url);
+[[nodiscard]] std::optional<std::string> GetResourcePath(std::string_view url);
 
 // Determine the mime type based on |resource_path|'s file extension.
-std::string GetMimeType(const std::string& resource_path);
+[[nodiscard]] std::string GetMimeType(std::string_view resource_path);
 
 #if defined(OS_WIN)
 // Returns the BINARY id value associated with |resource_path| on Windows.
@@ -43,27 +45,29 @@ std::string GetMimeType(const std::string& resource_path);
 // 1. Add the ID value in */resources/win/resource.h
 // 2. Add the ID to file path mapping in */resources/win/resource.rc
 // 2. Add the |resource_path| to ID mapping in */resource_util_win_impl.cc.
-int GetResourceId(const std::string& resource_path);
+[[nodiscard]] int GetResourceId(std::string_view resource_path);
 
 // Create a new provider for loading BINARY resources on Windows. Only URLs
 // beginning with |root_url| will be handled by this provider. See the
 // "resource_manager" target for example usage.
 CefResourceManager::Provider* CreateBinaryResourceProvider(
-    const std::string& root_url);
+    std::string_view root_url);
 #endif  // defined(OS_WIN)
 
 // Retrieve |resource_path| contents as a std::string. Returns false if the
 // resource is not found.
-bool GetResourceString(const std::string& resource_path, std::string& out_data);
+[[nodiscard]] bool GetResourceString(std::string_view resource_path,
+                                     std::string& out_data);
 
 // Retrieve |resource_path| contents as a CefStreamReader. Returns nullptr if
 // the resource is not found.
-CefRefPtr<CefStreamReader> GetResourceReader(const std::string& resource_path);
+[[nodiscard]] CefRefPtr<CefStreamReader> GetResourceReader(
+    std::string_view resource_path);
 
 // Retrieve |resource_path| contents as a CefResourceHandler. Returns nullptr if
 // the resource is not found.
-CefRefPtr<CefResourceHandler> GetResourceHandler(
-    const std::string& resource_path);
+[[nodiscard]] CefRefPtr<CefResourceHandler> GetResourceHandler(
+    std::string_view resource_path);
 
 }  // namespace shared
 

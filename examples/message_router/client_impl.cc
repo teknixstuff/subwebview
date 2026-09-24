@@ -15,13 +15,15 @@ namespace message_router {
 
 namespace {
 
-const char kTestMessageName[] = "MessageRouterTest";
+constexpr char kTestMessageName[] = "MessageRouterTest";
 
 // Handle messages in the browser process.
 class MessageHandler : public CefMessageRouterBrowserSide::Handler {
  public:
   explicit MessageHandler(const CefString& startup_url)
       : startup_url_(startup_url) {}
+  MessageHandler(const MessageHandler&) = delete;
+  MessageHandler& operator=(const MessageHandler&) = delete;
 
   // Called due to cefQuery execution in message_router.html.
   bool OnQuery(CefRefPtr<CefBrowser> browser,
@@ -49,8 +51,6 @@ class MessageHandler : public CefMessageRouterBrowserSide::Handler {
 
  private:
   const CefString startup_url_;
-
-  DISALLOW_COPY_AND_ASSIGN(MessageHandler);
 };
 
 }  // namespace
@@ -83,7 +83,7 @@ void Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
     message_router_ = CefMessageRouterBrowserSide::Create(config);
 
     // Register handlers with the router.
-    message_handler_.reset(new MessageHandler(startup_url_));
+    message_handler_ = std::make_unique<MessageHandler>(startup_url_);
     message_router_->AddHandler(message_handler_.get(), false);
   }
 
@@ -156,9 +156,9 @@ CefRefPtr<CefResourceHandler> Client::GetResourceHandler(
   // usage (multiple files, zip archives, custom handlers, etc.) you might want
   // to use CefResourceManager. See the "resource_manager" target for an
   // example implementation.
-  const std::string& resource_path = shared::GetResourcePath(url);
-  if (!resource_path.empty())
-    return shared::GetResourceHandler(resource_path);
+  const auto resource_path = shared::GetResourcePath(url);
+  if (resource_path)
+    return shared::GetResourceHandler(*resource_path);
 
   return nullptr;
 }

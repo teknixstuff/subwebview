@@ -6,28 +6,52 @@
 #define CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_
 
 #include "include/cef_client.h"
+#include "npapi/npfunctions.h"
 
 namespace minimal {
 
 // Minimal implementation of client handlers.
 class Client : public CefClient,
                public CefDisplayHandler,
-               public CefLifeSpanHandler {
+               public CefLifeSpanHandler,
+               public CefLoadHandler {
  public:
   Client();
+
+  HWND hPluginWnd;
+  std::string* profileDir;
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
+  CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 
   // CefDisplayHandler methods:
   void OnTitleChange(CefRefPtr<CefBrowser> browser,
                      const CefString& title) override;
 
+  // GetLoadHandler methods:
+  void OnLoadStart(CefRefPtr<CefBrowser> browser,
+                   CefRefPtr<CefFrame> frame,
+                   TransitionType transition_type) override;
+
   // CefLifeSpanHandler methods:
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
   bool DoClose(CefRefPtr<CefBrowser> browser) override;
   void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
+  bool OnBeforePopup(CefRefPtr<CefBrowser> browser,
+                     CefRefPtr<CefFrame> frame,
+                     int popup_id,
+                     const CefString& target_url,
+                     const CefString& target_frame_name,
+                     WindowOpenDisposition target_disposition,
+                     bool user_gesture,
+                     const CefPopupFeatures& popupFeatures,
+                     CefWindowInfo& windowInfo,
+                     CefRefPtr<CefClient>& client,
+                     CefBrowserSettings& settings,
+                     CefRefPtr<CefDictionaryValue>& extra_info,
+                     bool* no_javascript_access) override;
 
  private:
   IMPLEMENT_REFCOUNTING(Client);

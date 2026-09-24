@@ -8,7 +8,6 @@
 
 # Sources common to main and subprocess executables.
 set(EXAMPLE_COMMON_SRCS
-  scheme_strings.cc
   scheme_strings.h
   )
 
@@ -107,11 +106,6 @@ if(OS_MAC)
   set(EXECUTABLE_NAME "${EXAMPLE_TARGET}")
   set(PRODUCT_NAME "${EXAMPLE_TARGET}")
 
-  if(USE_SANDBOX)
-    # Logical target used to link the cef_sandbox library.
-    ADD_LOGICAL_TARGET("cef_sandbox_lib" "${CEF_SANDBOX_LIB_DEBUG}" "${CEF_SANDBOX_LIB_RELEASE}")
-  endif()
-
   # Main app bundle target.
   add_executable(${EXAMPLE_TARGET} MACOSX_BUNDLE ${EXAMPLE_SRCS} ${EXAMPLE_RESOURCES_SRCS})
   SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
@@ -119,18 +113,11 @@ if(OS_MAC)
   target_link_libraries(${EXAMPLE_TARGET} shared)
   set_target_properties(${EXAMPLE_TARGET} PROPERTIES
     RESOURCE "${EXAMPLE_RESOURCES_SRCS}"
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_INFO_PLIST}"
+    MACOSX_BUNDLE_INFO_PLIST "${SHARED_INFO_PLIST}"
     )
 
-  # Copy the CEF framework into the Frameworks directory.
-  add_custom_command(
-    TARGET ${EXAMPLE_TARGET}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CEF_BINARY_DIR}/Chromium Embedded Framework.framework"
-            "${EXAMPLE_APP}/Contents/Frameworks/Chromium Embedded Framework.framework"
-    VERBATIM
-    )
+  # Copy the CEF framework into the Frameworks directory and create the necessary symlinks.
+  COPY_MAC_FRAMEWORK("${EXAMPLE_TARGET}" "${CEF_BINARY_DIR}" "${EXAMPLE_APP}")
 
   # Create the multiple Helper app bundle targets.
   foreach(_suffix_list ${CEF_HELPER_APP_SUFFIXES})
@@ -149,7 +136,7 @@ if(OS_MAC)
     # MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
     # wrong values with multiple targets.
     set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist.in")
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_HELPER_INFO_PLIST}" _plist_contents)
+    file(READ "${SHARED_HELPER_INFO_PLIST}" _plist_contents)
     string(REPLACE "\${EXECUTABLE_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
     string(REPLACE "\${PRODUCT_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
     string(REPLACE "\${BUNDLE_ID_SUFFIX}" "${_plist_suffix}" _plist_contents ${_plist_contents})
@@ -164,10 +151,6 @@ if(OS_MAC)
       MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
       OUTPUT_NAME ${_helper_output_name}
       )
-
-    if(USE_SANDBOX)
-      target_link_libraries(${_helper_target} cef_sandbox_lib)
-    endif()
 
     # Add the Helper as a dependency of the main executable target.
     add_dependencies(${EXAMPLE_TARGET} "${_helper_target}")
@@ -208,9 +191,25 @@ if(OS_WINDOWS)
   # Create source groups for Visual Studio.
   SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
 
-  # Executable target.
-  add_executable(${EXAMPLE_TARGET} WIN32 ${EXAMPLE_SRCS})
-  SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+  if(USE_SANDBOX)
+    # Shared library (DLL) target.
+    add_library(${EXAMPLE_TARGET} SHARED ${EXAMPLE_SRCS})
+    SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+
+    # Copy and rename the bootstrap binary.
+    COPY_SINGLE_FILE(${EXAMPLE_TARGET} ${CEF_BINARY_DIR}/bootstrap.exe ${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}.exe)
+    if (CMAKE_GENERATOR MATCHES "Visual Studio")
+      # Make the bootstrap binary the default command for the Visual Studio debugger.
+      set_target_properties(${EXAMPLE_TARGET} PROPERTIES
+        VS_DEBUGGER_COMMAND "$<TARGET_FILE_DIR:${EXAMPLE_TARGET}>/${EXAMPLE_TARGET}.exe"
+      )
+    endif()
+  else()
+    # Executable target (sandbox disabled).
+    add_executable(${EXAMPLE_TARGET} WIN32 ${EXAMPLE_SRCS})
+    SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+  endif()
+
   add_dependencies(${EXAMPLE_TARGET} shared)
   target_link_libraries(${EXAMPLE_TARGET} shared)
 endif()

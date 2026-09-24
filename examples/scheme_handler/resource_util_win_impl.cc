@@ -8,7 +8,7 @@
 
 namespace shared {
 
-int GetResourceId(const std::string& resource_path) {
+int GetResourceId(std::string_view resource_path) {
   if (resource_path == "logo.png")
     return IDS_LOGO_PNG;
   if (resource_path == "scheme_handler.html")

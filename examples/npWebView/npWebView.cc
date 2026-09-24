@@ -1,6 +1,6 @@
 #include "examples/shared/main.h"
 #include "examples/shared/browser_util.h"
-#include "examples/minimal/client_minimal.h"
+#include "examples/npWebView/client_minimal.h"
 #include "include/cef_sandbox_win.h"
 #include "include/base/cef_callback.h"
 #include "include/wrapper/cef_closure_task.h"
@@ -16,6 +16,7 @@
 #define _WINDOWS
 #endif
 #include "npapi/npfunctions.h"
+#include <delayimp.h>
 
 HANDLE hWebViewThread;
 
@@ -60,6 +61,28 @@ const WCHAR *g_lpRegKey = L"Software\\MozillaPlugins\\@subwebview.teknixstuff.co
 const WCHAR *g_lpRegKey = L"Software\\MozillaPlugins\\@subwebview.teknixstuff.com/npWebView_x64";
 #endif
 int gTranslationIdx = 0;
+
+FARPROC WINAPI DelayLoadHook(unsigned cbNotif, DelayLoadInfo* pDLInfo) {
+  if (cbNotif == dliNotePreLoadLibrary) {
+    if (_stricmp(pDLInfo->szDll, "libcef.dll") == 0) {
+      wchar_t dllPath[MAX_PATH];
+      GetModuleFileName(g_hInstance, dllPath, MAX_PATH);
+
+      wchar_t* lastSlash = wcsrchr(dllPath, L'\\');
+      if (lastSlash) {
+        *(lastSlash + 1) = L'\0';
+        wcscat_s(dllPath, L"libcef.dll");
+
+        HMODULE hMod =
+            LoadLibraryEx(dllPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+        return (FARPROC)hMod;
+      }
+    }
+  }
+  return NULL;
+}
+
+extern "C" const PfnDliHook __pfnDliNotifyHook2 = DelayLoadHook;
 
 DWORD cefInit = 0;
 std::string* profileDir;
