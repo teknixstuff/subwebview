@@ -130,3 +130,49 @@ let progListener = {
   }
 };
 window.addEventListener('load', ()=>progListener.init());
+
+let appShellService = Components.classes["@mozilla.org/appshell/appShellService;1"]
+                                .getService(Components.interfaces.nsIAppShellService);
+let hiddenWin = appShellService.hiddenDOMWindow;
+
+if (typeof hiddenWin.subWebView_cspObserver === 'undefined') {
+  hiddenWin.subWebView_cspObserver = {
+    isRegistered: false,
+
+    init: function() {
+      if (this.isRegistered) return;
+      let obsService = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService);
+      obsService.addObserver(this, "http-on-examine-response", false);
+      this.isRegistered = true;
+    },
+
+    uninit: function() {
+      if (!this.isRegistered) return;
+      let obsService = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService);
+      obsService.removeObserver(this, "http-on-examine-response");
+      this.isRegistered = false;
+    },
+
+    observe: function(subject, topic, data) {
+      if (topic === "http-on-examine-response") {
+        let channel = subject.QueryInterface(Ci.nsIHttpChannel);
+      
+        let engine = getEngineForURI(channel.URI.spec);
+        if (engine != 'standard') {
+          try {
+            channel.setResponseHeader("Content-Security-Policy", "", false);
+          } catch (e) {}
+          try {
+            channel.setResponseHeader("Content-Security-Policy-Report-Only", "", false);
+          } catch (e) {}
+          try {
+            channel.setResponseHeader("X-Content-Security-Policy", "", false);
+          } catch (e) {}
+        }
+      }
+    },
+
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupports])
+  };
+}
+window.addEventListener('load', ()=>hiddenWin.subWebView_cspObserver.init());

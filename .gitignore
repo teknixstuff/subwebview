@@ -56,3 +56,5 @@ bazel/cef/platform.bzl
 # Bazel output files/directories
 bazel-*
 MODULE.bazel.lock
+# XPI binaries
+/xpi/plugins

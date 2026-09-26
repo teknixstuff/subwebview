@@ -4,7 +4,7 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
     <em:id>subwebview@teknixstuff.com</em:id>
-    <em:version>1.1.0</em:version>
+    <em:version>1.1.1</em:version>
     <em:type>2</em:type>
     <em:unpack>true</em:unpack>
     <em:optionsURL>chrome://subwebview/content/settings.xul</em:optionsURL>
@@ -14,7 +14,7 @@
       <Description>
         <em:id>{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}</em:id>
         <em:minVersion>33.0.0</em:minVersion>
-        <em:maxVersion>33.*</em:maxVersion>
+        <em:maxVersion>35.*</em:maxVersion>
       </Description>
     </em:targetApplication>
 

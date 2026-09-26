@@ -101,10 +101,6 @@ DWORD WINAPI CEFMainThread(LPVOID) {
     // Provide CEF with command-line arguments.
     CefMainArgs main_args;
 
-    // Create a temporary CommandLine object.
-    CefRefPtr<CefCommandLine> command_line =
-        shared::CreateCommandLine(main_args);
-
     // Create a CefApp of the correct process type.
     CefRefPtr<CefApp> app = shared::CreateBrowserProcessApp();
 
