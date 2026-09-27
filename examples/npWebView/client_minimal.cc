@@ -23,6 +23,7 @@ namespace minimal {
 
     void Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
       // Call the default shared implementation.
+      _browser = browser;
       shared::OnAfterCreated(browser);
     }
 
@@ -33,6 +34,7 @@ namespace minimal {
 
     void Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
       // Call the default shared implementation.
+      _browser = nullptr;
       return shared::OnBeforeClose(browser);
     }
 

@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "Version.h"
 
-VS_VERSION_INFO    VERSIONINFO     MOVEABLE IMPURE LOADONCALL DISCARDABLE
+VS_VERSION_INFO    VERSIONINFO
   FILEVERSION    VER_RESOURCE
   PRODUCTVERSION VER_RESOURCE
   FILEFLAGS     0
@@ -15,7 +15,7 @@ BEGIN
     //language ID = U.S. English, char set = Windows, Multilingual
 
     BEGIN
-      VALUE "FileDescription",  "View web pages using WebView inside another browser"
+      VALUE "FileDescription",  "View web pages using Chromium inside another browser"
       VALUE "FileVersion",      VER_RESOURCE_STR
       VALUE "LegalCopyright",   COPYRIGHT_STR
       VALUE "OriginalFilename", "npWebView.dll"
@@ -25,7 +25,7 @@ BEGIN
 
       VALUE "MIMEType", "application/x-subwebview"
       VALUE "FileExtents", ""
-      VALUE "FileOpenName", "WebView wrapped web page"
+      VALUE "FileOpenName", "Chromium wrapped web page"
     END
   END
   BLOCK "VarFileInfo"

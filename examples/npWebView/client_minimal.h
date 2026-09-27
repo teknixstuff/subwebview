@@ -21,6 +21,8 @@ class Client : public CefClient,
   HWND hPluginWnd;
   std::string* profileDir;
 
+  CefRefPtr<CefBrowser> GetBrowser() { return _browser; }
+
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
@@ -54,6 +56,7 @@ class Client : public CefClient,
                      bool* no_javascript_access) override;
 
  private:
+  CefRefPtr<CefBrowser> _browser;
   IMPLEMENT_REFCOUNTING(Client);
   DISALLOW_COPY_AND_ASSIGN(Client);
 };

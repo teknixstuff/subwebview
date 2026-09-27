@@ -12,6 +12,9 @@ set(EXAMPLE_SRCS
   client_minimal.cc
   client_minimal.h
   npWebView.cc
+  rtlgenrandom_x64.lib
+  network_http.cpp
+  network_http.h
   )
 set(EXAMPLE_SRCS_WINDOWS
   resource.h

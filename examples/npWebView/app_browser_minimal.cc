@@ -3,15 +3,19 @@
 // can be found in the LICENSE file.
 
 #include "examples/npWebView/client_minimal.h"
-#include "examples/shared/app_factory.h"
+#include "appfactory.h"
 #include "examples/shared/browser_util.h"
+#include "network_http.h"
 
 namespace minimal {
 
 // Minimal implementation of CefApp for the browser process.
 class BrowserApp : public CefApp, public CefBrowserProcessHandler {
  public:
-  BrowserApp() {}
+  BrowserApp(NPNetscapeFuncs pNPNFuncs, NPP npp) {
+    this->npp = npp;
+    this->pNPNFuncs = pNPNFuncs;
+  }
 
   // CefApp methods:
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
@@ -34,9 +38,18 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
 
   // CefBrowserProcessHandler methods:
   void OnContextInitialized() override {
+    CefRefPtr<CefRequestContext> context =
+        CefRequestContext::GetGlobalContext();
+
+    if (context) {
+      context->RegisterSchemeHandlerFactory("http", "", new MyHttpSchemeHandlerFactory(pNPNFuncs, npp));
+      context->RegisterSchemeHandlerFactory("https", "", new MyHttpSchemeHandlerFactory(pNPNFuncs, npp));
+    }
   }
 
  private:
+  NPP npp;
+  NPNetscapeFuncs pNPNFuncs;
   IMPLEMENT_REFCOUNTING(BrowserApp);
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 };
@@ -45,8 +58,8 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
 
 namespace shared {
 
-CefRefPtr<CefApp> CreateBrowserProcessApp() {
-  return new minimal::BrowserApp();
+CefRefPtr<CefApp> CreateBrowserProcessApp(NPNetscapeFuncs pNPNFuncs, NPP npp) {
+  return new minimal::BrowserApp(pNPNFuncs, npp);
 }
 
 }  // namespace shared

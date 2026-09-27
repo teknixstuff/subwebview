@@ -4,7 +4,7 @@
 #include "include/cef_sandbox_win.h"
 #include "include/base/cef_callback.h"
 #include "include/wrapper/cef_closure_task.h"
-#include "examples/shared/app_factory.h"
+#include "appfactory.h"
 #include "examples/shared/client_manager.h"
 #include "examples/shared/main_util.h"
 
@@ -87,7 +87,8 @@ extern "C" const PfnDliHook __pfnDliNotifyHook2 = DelayLoadHook;
 DWORD cefInit = 0;
 std::string* profileDir;
 
-DWORD WINAPI CEFMainThread(LPVOID) {
+DWORD WINAPI CEFMainThread(LPVOID pParam) {
+    NPP npp = (NPP)pParam;
     void* sandbox_info = nullptr;
 
 #if defined(CEF_USE_SANDBOX)
@@ -102,7 +103,7 @@ DWORD WINAPI CEFMainThread(LPVOID) {
     CefMainArgs main_args;
 
     // Create a CefApp of the correct process type.
-    CefRefPtr<CefApp> app = shared::CreateBrowserProcessApp();
+    CefRefPtr<CefApp> app = shared::CreateBrowserProcessApp(gNPNFuncs, npp);
 
     // Create the singleton manager instance.
     shared::ClientManager manager;
@@ -256,6 +257,7 @@ int cmpWcharPtrs(const void *a, const void *b)
 struct InstanceData {
     NPWindow *  npwin;
     LPCWSTR     message;
+    minimal::Client* client;
 };
 
 #define COL_WINDOW_BG RGB(0xcc, 0xcc, 0xcc)
@@ -305,6 +307,7 @@ void LaunchSubWebView(InstanceData *data, const char *url_utf8, NPP npp)
                                   nullptr);
 
     data->message = L"Launched SubWebView";
+    data->client = client;
     
     /*
     // prevent overlong URLs from making LaunchProcess fail
@@ -510,6 +513,11 @@ NPError NP_LOADDS NPP_Destroy(NPP instance, NPSavedData** save)
     }
 
     InstanceData *data = (InstanceData *)instance->pdata;
+
+    if (data->client && data->client->GetBrowser()) {
+        data->client->GetBrowser()->GetHost()->CloseBrowser(true);
+        delete data->client;
+    }
 
     free(data);
     
