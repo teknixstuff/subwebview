@@ -5,6 +5,7 @@
 #include <fstream>
 #include "include/internal/cef_types.h"
 #include "examples/shared/client_util.h"
+#include "examples/shared/client_manager.h"
 #include "examples/npWebView/client_minimal.h"
 #define WM_CEF_INVOKE_POPUP (WM_USER + 0x0001)
 #define WM_CEF_SET_TITLE (WM_USER + 0x0002)
@@ -42,10 +43,10 @@ namespace minimal {
         CefRefPtr<CefFrame> frame,
         TransitionType transition_type)
     {
-        std::ifstream ifs(*profileDir + "\\SubWebView\\subwebview.user.js");
-        std::string script((std::istreambuf_iterator<char>(ifs)),
-                          (std::istreambuf_iterator<char>()));
-        frame->ExecuteJavaScript(script, L"subwebview-profile://subwebview.user.js", 0);
+        //std::ifstream ifs(*profileDir + "\\SubWebView\\subwebview.user.js");
+        //std::string script((std::istreambuf_iterator<char>(ifs)),
+        //                  (std::istreambuf_iterator<char>()));
+        //frame->ExecuteJavaScript(script, L"subwebview-profile://subwebview.user.js", 0);
     }
 
     bool Client::OnBeforePopup(CefRefPtr<CefBrowser> browser,

@@ -48,11 +48,11 @@ std::vector<char> GetCompletePayload(CefRefPtr<CefPostData> postData) {
   return fullPayload;
 }
 
-std::wstring GenerateName() {
+std::string GenerateName() {
   BYTE bRandBytes[16];
-  const WCHAR szHex[] = L"0123456789ABCDEF";
+  const char szHex[] = "0123456789ABCDEF";
   SystemFunction036(bRandBytes, sizeof(bRandBytes));
-  std::wstring name = L"SubWebView_";
+  std::string name = "SubWebView_";
   for (int i = 0; i < ARRAYSIZE(bRandBytes); i++) {
     name += szHex[bRandBytes[i] >> 4];
     name += szHex[bRandBytes[i] & 0xF];
@@ -60,8 +60,100 @@ std::wstring GenerateName() {
   return name;
 }
 
-void SendRequest(void* param) {
+NPObject* CreateJSArray(NPNetscapeFuncs pNPNFuncs, NPP npp, NPObject* windowObj) {
+  NPIdentifier arrayId = pNPNFuncs.getstringidentifier("Array");
+  NPVariant arrayConstructorVar;
 
+  if (pNPNFuncs.getproperty(npp, windowObj, arrayId, &arrayConstructorVar) && NPVARIANT_IS_OBJECT(arrayConstructorVar)) {
+    NPObject* arrayConstructorObj = NPVARIANT_TO_OBJECT(arrayConstructorVar);
+    NPVariant resultVar;
+
+    if (pNPNFuncs.construct(npp, arrayConstructorObj, NULL, 0, &resultVar)) {
+      if (NPVARIANT_IS_OBJECT(resultVar)) {
+        pNPNFuncs.releaseobject(arrayConstructorObj);
+        return NPVARIANT_TO_OBJECT(resultVar);
+      }
+    }
+    pNPNFuncs.releaseobject(arrayConstructorObj);
+  }
+  return NULL;
+}
+
+NPObject* ConvertHeadersToJSArray(NPNetscapeFuncs pNPNFuncs, NPP npp, const CefRequest::HeaderMap& myMap) {
+  NPObject* windowObj = NULL;
+  pNPNFuncs.getvalue(npp, NPNVWindowNPObject, &windowObj);
+
+  NPObject* jsArrayObj = CreateJSArray(pNPNFuncs, npp, windowObj);
+  if (!jsArrayObj) {
+    pNPNFuncs.releaseobject(windowObj);
+    return NULL;
+  }
+
+  uint32_t index = 0;
+  NPIdentifier id0 = pNPNFuncs.getintidentifier(0);
+  NPIdentifier id1 = pNPNFuncs.getintidentifier(1);
+
+  for (auto it = myMap.begin(); it != myMap.end(); ++it, ++index) {
+    NPObject* innerArrayObj = CreateJSArray(pNPNFuncs, npp, windowObj);
+    if (!innerArrayObj)
+      continue;
+
+    NPVariant keyVar;
+    auto keyStr = it->first.ToString();
+    STRINGZ_TO_NPVARIANT(keyStr.c_str(), keyVar);
+    pNPNFuncs.setproperty(npp, innerArrayObj, id0, &keyVar);
+
+    NPVariant valVar;
+    auto valStr = it->second.ToString();
+    STRINGZ_TO_NPVARIANT(valStr.c_str(), valVar);
+    pNPNFuncs.setproperty(npp, innerArrayObj, id1, &valVar);
+
+    NPVariant innerArrayVar;
+    OBJECT_TO_NPVARIANT(innerArrayObj, innerArrayVar);
+
+    NPIdentifier arrayIndexId = pNPNFuncs.getintidentifier(index);
+    pNPNFuncs.setproperty(npp, jsArrayObj, arrayIndexId, &innerArrayVar);
+
+    pNPNFuncs.releaseobject(innerArrayObj);
+  }
+
+  pNPNFuncs.releaseobject(windowObj);
+  return jsArrayObj;
+}
+
+typedef struct {
+  HANDLE hEvent;
+  LPCSTR szPostDataName;
+  LPCSTR szMethod;
+  LPCSTR szURI;
+  UINT64 cbPostDataSize;
+  CefRequest::HeaderMap* headers;
+  NPP npp;
+  NPNetscapeFuncs pNPNFuncs;
+} RequestData;
+
+void SendRequest(void* param) {
+  RequestData* reqData = (RequestData*)param;
+  auto pHeaders = ConvertHeadersToJSArray(reqData->pNPNFuncs, reqData->npp, *reqData->headers);
+
+  NPObject* windowObj = NULL;
+  reqData->pNPNFuncs.getvalue(reqData->npp, NPNVWindowNPObject, &windowObj);
+
+  NPIdentifier makeRequestId = reqData->pNPNFuncs.getstringidentifier("subWebViewMakeRequest");
+  NPVariant makeRequestVar;
+
+  if (reqData->pNPNFuncs.getproperty(reqData->npp, windowObj, makeRequestId, &makeRequestVar) && NPVARIANT_IS_OBJECT(makeRequestVar))
+  {
+    NPVariant result;
+    NPVariant params[4];
+    STRINGZ_TO_NPVARIANT(reqData->szMethod, params[0]);
+    STRINGZ_TO_NPVARIANT(reqData->szURI, params[1]);
+    params[2].type = NPVariantType_Object;
+    params[2].value.objectValue = pHeaders;
+    STRINGZ_TO_NPVARIANT(reqData->szPostDataName, params[3]);
+    reqData->pNPNFuncs.invokeDefault(reqData->npp, NPVARIANT_TO_OBJECT(makeRequestVar), params, ARRAYSIZE(params), &result);
+  }
+  SetEvent(reqData->hEvent);
 }
 
 class MyCustomHttpHandler : public CefResourceHandler {
@@ -83,24 +175,35 @@ class MyCustomHttpHandler : public CefResourceHandler {
     request->GetHeaderMap(headers);
 
     auto data = GetCompletePayload(request->GetPostData());
-    std::wstring szPostDataName = L"";
+    std::string szPostDataName = "";
     HANDLE hPostData = NULL;
     if (data.size() > 0) {
       ULARGE_INTEGER ulSize;
       ulSize.QuadPart = data.size();
       szPostDataName = GenerateName();
-      hPostData = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT, ulSize.HighPart, ulSize.LowPart, szPostDataName.c_str());
+      hPostData = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT, ulSize.HighPart, ulSize.LowPart, szPostDataName.c_str());
       LPVOID pPostData = MapViewOfFile(hPostData, FILE_MAP_ALL_ACCESS, 0, 0, 0);
       memcpy(pPostData, data.data(), data.size());
       UnmapViewOfFile(pPostData);
     }
 
+    RequestData reqData;
+    reqData.szPostDataName = szPostDataName.c_str();
+    reqData.cbPostDataSize = data.size();
+    reqData.headers = &headers;
+    reqData.pNPNFuncs = pNPNFuncs;
+    reqData.npp = npp;
+    reqData.szMethod = method.c_str();
+    reqData.szURI = url.c_str();
+
     HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    pNPNFuncs.pluginthreadasynccall(npp, SendRequest, nullptr);
+    reqData.hEvent = hEvent;
+    pNPNFuncs.pluginthreadasynccall(npp, SendRequest, &reqData);
     WaitForSingleObject(hEvent, INFINITE);
     CloseHandle(hEvent);
+    CloseHandle(hPostData);
 
-    handle_request = false;
+    handle_request = true;
     return true;
   }
 

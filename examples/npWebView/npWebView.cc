@@ -191,7 +191,8 @@ DLLEXPORT NPError WINAPI NP_Shutdown(void)
 {
     if (cefInit != 0) {
         cefInit = 1;
-        CefPostTask(TID_UI, base::BindOnce(CefQuitMessageLoop));
+        shared::ClientManager::GetInstance()->CloseAllBrowsers(true);
+        //CefPostTask(TID_UI, base::BindOnce(CefQuitMessageLoop));
         WaitForSingleObject(hWebViewThread, INFINITE);
         delete profileDir;
     }
@@ -285,7 +286,7 @@ void LaunchSubWebView(InstanceData *data, const char *url_utf8, NPP npp)
         gNPNFuncs.getproperty(npp, window, profileId, &profileVar);
         NPString profile = NPVARIANT_TO_STRING(profileVar);
         profileDir = new std::string(profile.utf8characters, profile.utf8length);
-        hWebViewThread = CreateThread(NULL, 0, CEFMainThread, NULL, 0, NULL);
+        hWebViewThread = CreateThread(NULL, 0, CEFMainThread, npp, 0, NULL);
     }
 
     data->message = L"Waiting for SubWebView...";
@@ -516,7 +517,6 @@ NPError NP_LOADDS NPP_Destroy(NPP instance, NPSavedData** save)
 
     if (data->client && data->client->GetBrowser()) {
         data->client->GetBrowser()->GetHost()->CloseBrowser(true);
-        delete data->client;
     }
 
     free(data);
