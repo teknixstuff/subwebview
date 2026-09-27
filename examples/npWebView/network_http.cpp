@@ -8,6 +8,52 @@
 #include <string>
 #include <fstream>
 #include "network_http.h"
+#include "npapi/npfunctions.h"
+#include "npapi/npruntime.h"
+
+struct RequestCallbackObject : public NPObject {
+  NPP npp;
+  CefCallback* callback;
+};
+
+static NPObject* RequestCallback_Allocate(NPP npp, NPClass* aClass) {
+  RequestCallbackObject* cbObj = (RequestCallbackObject*)calloc(1, sizeof(RequestCallbackObject));
+  if (cbObj) {
+    cbObj->npp = npp;
+  }
+  return (NPObject*)cbObj;
+}
+
+static void RequestCallback_Deallocate(NPObject* npobj) {
+  free(npobj);
+}
+
+static bool RequestCallback_InvokeDefault(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
+{
+  RequestCallbackObject* cbObj = (RequestCallbackObject*)npobj;
+
+  if (argCount > 0 && NPVARIANT_IS_STRING(args[0])) {
+    NPString jsString = NPVARIANT_TO_STRING(args[0]);
+  }
+
+  VOID_TO_NPVARIANT(*result);
+  return true;
+}
+
+static NPClass s_RequestCallbackClass = {
+    NP_CLASS_STRUCT_VERSION,
+    RequestCallback_Allocate,
+    RequestCallback_Deallocate,
+    NULL,
+    NULL,
+    NULL,
+    RequestCallback_InvokeDefault,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
 extern "C" __declspec(dllimport) BOOLEAN WINAPI SystemFunction036(PVOID RandomBuffer, ULONG RandomBufferLength);
 
@@ -213,6 +259,7 @@ class MyCustomHttpHandler : public CefResourceHandler {
   {
     response->SetStatus(200);
     response->SetMimeType("text/html");
+    response->SetError
 
     response_length = -1;
   }
